@@ -1,0 +1,2570 @@
+1)fal-ai/hidream-i1-full
+About
+Generate
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/hidream-i1-full", {
+  input: {
+    prompt: "a cat holding a skateboard which has 'fal' written on it in red spray paint"
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+Streaming
+#
+This model supports streaming requests. You can stream data directly to the model and get the result in real-time.
+
+
+import { fal } from "@fal-ai/client";
+
+const stream = await fal.stream("fal-ai/hidream-i1-full", {
+  input: {
+    prompt: "a cat holding a skateboard which has 'fal' written on it in red spray paint"
+  }
+});
+
+for await (const event of stream) {
+  console.log(event);
+}
+
+const result = await stream.done();
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/hidream-i1-full", {
+  input: {
+    prompt: "a cat holding a skateboard which has 'fal' written on it in red spray paint"
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/hidream-i1-full", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/hidream-i1-full", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+prompt string
+The prompt to generate an image from.
+
+negative_prompt string
+The negative prompt to use. Use it to address details that you don't want in the image. This could be colors, objects, scenery and even the small details (e.g. moustache, blurry, low resolution). Default value: ""
+
+image_size ImageSize | Enum
+The size of the generated image.
+
+Possible enum values: square_hd, square, portrait_4_3, portrait_16_9, landscape_4_3, landscape_16_9
+
+Note: For custom image sizes, you can pass the width and height as an object:
+
+
+"image_size": {
+  "width": 1280,
+  "height": 720
+}
+num_inference_steps integer
+The number of inference steps to perform. Default value: 50
+
+seed integer
+The same seed and the same prompt given to the same version of the model will output the same image every time.
+
+guidance_scale float
+The CFG (Classifier Free Guidance) scale is a measure of how close you want the model to stick to your prompt when looking for a related image to show you. Default value: 5
+
+sync_mode boolean
+If set to true, the function will wait for the image to be generated and uploaded before returning the response. This will increase the latency of the function but it allows you to get the image directly in the response without going through the CDN.
+
+num_images integer
+The number of images to generate. Default value: 1
+
+enable_safety_checker boolean
+If set to true, the safety checker will be enabled. Default value: true
+
+output_format OutputFormatEnum
+The format of the generated image. Default value: "jpeg"
+
+Possible enum values: jpeg, png
+
+loras list<LoraWeight>
+A list of LoRAs to apply to the model. Each LoRA specifies its path, scale, and optional weight name.
+
+
+{
+  "prompt": "a cat holding a skateboard which has 'fal' written on it in red spray paint",
+  "negative_prompt": "",
+  "image_size": {
+    "height": 1024,
+    "width": 1024
+  },
+  "num_inference_steps": 50,
+  "guidance_scale": 5,
+  "num_images": 1,
+  "enable_safety_checker": true,
+  "output_format": "jpeg",
+  "loras": []
+}
+Output
+#
+
+Other types
+#
+ImageSize
+#
+width integer
+The width of the generated image. Default value: 512
+
+height integer
+The height of the generated image. Default value: 512
+
+LoraWeight
+#
+path string
+URL or the path to the LoRA weights.
+
+weight_name string
+Name of the LoRA weight. Used only if path is a Hugging Face repository, and required only if you have more than 1 safetensors file in the repo.
+
+scale float
+The scale of the LoRA weight. This is used to scale the LoRA weight before merging it with the base model. Default value: 1
+
+Image
+#
+url string
+width integer
+height integer
+content_type string
+Default value: "image/jpeg"
+
+
+2)fal-ai/ideogram/v2
+
+About
+Ideogram's state-of-the-art image generation model. Can be used as an API directly from fal.
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/ideogram/v2", {
+  input: {
+    prompt: "A comic style illustration of a skeleton sitting on a toilet in a bathroom. The bathroom has a Halloween decoration with a pumpkin jack-o-lantern and bats flying around. There is a text above the skeleton that says \"Just Waiting for Halloween with Ideogram 2.0 at fal.ai\""
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/ideogram/v2", {
+  input: {
+    prompt: "A comic style illustration of a skeleton sitting on a toilet in a bathroom. The bathroom has a Halloween decoration with a pumpkin jack-o-lantern and bats flying around. There is a text above the skeleton that says \"Just Waiting for Halloween with Ideogram 2.0 at fal.ai\""
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/ideogram/v2", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/ideogram/v2", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+prompt string
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated image Default value: "1:1"
+
+Possible enum values: 10:16, 16:10, 9:16, 16:9, 4:3, 3:4, 1:1, 1:3, 3:1, 3:2, 2:3
+
+expand_prompt boolean
+Whether to expand the prompt with MagicPrompt functionality. Default value: true
+
+seed integer
+Seed for the random number generator
+
+style StyleEnum
+The style of the generated image Default value: "auto"
+
+Possible enum values: auto, general, realistic, design, render_3D, anime
+
+sync_mode boolean
+If set to true, the function will wait for the image to be generated and uploaded before returning the response. This will increase the latency of the function but it allows you to get the image directly in the response without going through the CDN.
+
+negative_prompt string
+A negative prompt to avoid in the generated image Default value: ""
+
+
+{
+  "prompt": "A comic style illustration of a skeleton sitting on a toilet in a bathroom. The bathroom has a Halloween decoration with a pumpkin jack-o-lantern and bats flying around. There is a text above the skeleton that says \"Just Waiting for Halloween with Ideogram 2.0 at fal.ai\"",
+  "aspect_ratio": "1:1",
+  "expand_prompt": true,
+  "style": "auto"
+}
+Output
+#
+images list<File>
+seed integer
+Seed used for the random number generator
+
+
+{
+  "images": [
+    {
+      "url": "https://fal.media/files/monkey/cNaoxPl0YAWYb-QVBvO9F_image.png"
+    }
+  ],
+  "seed": 123456
+}
+Other types
+#
+ReplaceBackgroundInputV3
+#
+image_urls list<string>
+A set of images to use as style references (maximum total size 10MB across all style references). The images should be in JPEG, PNG or WebP format
+
+rendering_speed RenderingSpeedEnum
+The rendering speed to use. Default value: "BALANCED"
+
+Possible enum values: TURBO, BALANCED, QUALITY
+
+color_palette ColorPalette
+A color palette for generation, must EITHER be specified via one of the presets (name) or explicitly via hexadecimal representations of the color with optional weights (members)
+
+style_codes list<string>
+A list of 8 character hexadecimal codes representing the style of the image. Cannot be used in conjunction with style_reference_images or style
+
+style Enum
+The style type to generate with. Cannot be used with style_codes.
+
+Possible enum values: AUTO, GENERAL, REALISTIC, DESIGN
+
+expand_prompt boolean
+Determine if MagicPrompt should be used in generating the request or not. Default value: true
+
+num_images integer
+Number of images to generate. Default value: 1
+
+seed integer
+Seed for the random number generator
+
+sync_mode boolean
+If set to true, the function will wait for the image to be generated and uploaded before returning the response. This will increase the latency of the function but it allows you to get the image directly in the response without going through the CDN.
+
+prompt string
+Cyber punk city with neon lights and skyscrappers
+
+image_url string
+The image URL whose background needs to be replaced
+
+ReplaceBackgroundOutputV3
+#
+images list<File>
+seed integer
+Seed used for the random number generator
+
+RemixOutputV3
+#
+images list<File>
+seed integer
+Seed used for the random number generator
+
+BaseTextToImageInputV3
+#
+image_urls list<string>
+A set of images to use as style references (maximum total size 10MB across all style references). The images should be in JPEG, PNG or WebP format
+
+rendering_speed RenderingSpeedEnum
+The rendering speed to use. Default value: "BALANCED"
+
+Possible enum values: TURBO, BALANCED, QUALITY
+
+color_palette ColorPalette
+A color palette for generation, must EITHER be specified via one of the presets (name) or explicitly via hexadecimal representations of the color with optional weights (members)
+
+style_codes list<string>
+A list of 8 character hexadecimal codes representing the style of the image. Cannot be used in conjunction with style_reference_images or style
+
+style Enum
+The style type to generate with. Cannot be used with style_codes.
+
+Possible enum values: AUTO, GENERAL, REALISTIC, DESIGN
+
+expand_prompt boolean
+Determine if MagicPrompt should be used in generating the request or not. Default value: true
+
+num_images integer
+Number of images to generate. Default value: 1
+
+seed integer
+Seed for the random number generator
+
+sync_mode boolean
+If set to true, the function will wait for the image to be generated and uploaded before returning the response. This will increase the latency of the function but it allows you to get the image directly in the response without going through the CDN.
+
+prompt string
+image_size ImageSize | Enum
+The resolution of the generated image Default value: square_hd
+
+Possible enum values: square_hd, square, portrait_4_3, portrait_16_9, landscape_4_3, landscape_16_9
+
+Note: For custom image sizes, you can pass the width and height as an object:
+
+
+"image_size": {
+  "width": 1280,
+  "height": 720
+}
+negative_prompt string
+Description of what to exclude from an image. Descriptions in the prompt take precedence to descriptions in the negative prompt. Default value: ""
+
+RGBColor
+#
+r integer
+Red color value
+
+g integer
+Green color value
+
+b integer
+Blue color value
+
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+ColorPalette
+#
+members list<ColorPaletteMember>
+A list of color palette members that define the color palette
+
+name Enum
+A color palette preset value
+
+Possible enum values: EMBER, FRESH, JUNGLE, MAGIC, MELON, MOSAIC, PASTEL, ULTRAMARINE
+
+ColorPaletteMember
+#
+rgb RGBColor
+RGB color value for the palette member
+
+color_weight float
+The weight of the color in the color palette Default value: 0.5
+
+EditOutputV3
+#
+images list<File>
+seed integer
+Seed used for the random number generator
+
+ImageSize
+#
+width integer
+The width of the generated image. Default value: 512
+
+height integer
+The height of the generated image. Default value: 512
+
+RemixImageInputV3
+#
+image_urls list<string>
+A set of images to use as style references (maximum total size 10MB across all style references). The images should be in JPEG, PNG or WebP format
+
+rendering_speed RenderingSpeedEnum
+The rendering speed to use. Default value: "BALANCED"
+
+Possible enum values: TURBO, BALANCED, QUALITY
+
+color_palette ColorPalette
+A color palette for generation, must EITHER be specified via one of the presets (name) or explicitly via hexadecimal representations of the color with optional weights (members)
+
+style_codes list<string>
+A list of 8 character hexadecimal codes representing the style of the image. Cannot be used in conjunction with style_reference_images or style
+
+style Enum
+The style type to generate with. Cannot be used with style_codes.
+
+Possible enum values: AUTO, GENERAL, REALISTIC, DESIGN
+
+expand_prompt boolean
+Determine if MagicPrompt should be used in generating the request or not. Default value: true
+
+num_images integer
+Number of images to generate. Default value: 1
+
+seed integer
+Seed for the random number generator
+
+sync_mode boolean
+If set to true, the function will wait for the image to be generated and uploaded before returning the response. This will increase the latency of the function but it allows you to get the image directly in the response without going through the CDN.
+
+prompt string
+The prompt to remix the image with
+
+image_url string
+The image URL to remix
+
+strength float
+Strength of the input image in the remix Default value: 0.8
+
+image_size ImageSize | Enum
+The resolution of the generated image Default value: square_hd
+
+Possible enum values: square_hd, square, portrait_4_3, portrait_16_9, landscape_4_3, landscape_16_9
+
+Note: For custom image sizes, you can pass the width and height as an object:
+
+
+"image_size": {
+  "width": 1280,
+  "height": 720
+}
+negative_prompt string
+Description of what to exclude from an image. Descriptions in the prompt take precedence to descriptions in the negative prompt. Default value: ""
+
+ReframeOutputV3
+#
+images list<File>
+seed integer
+Seed used for the random number generator
+
+EditImageInputV3
+#
+image_urls list<string>
+A set of images to use as style references (maximum total size 10MB across all style references). The images should be in JPEG, PNG or WebP format
+
+rendering_speed RenderingSpeedEnum
+The rendering speed to use. Default value: "BALANCED"
+
+Possible enum values: TURBO, BALANCED, QUALITY
+
+color_palette ColorPalette
+A color palette for generation, must EITHER be specified via one of the presets (name) or explicitly via hexadecimal representations of the color with optional weights (members)
+
+style_codes list<string>
+A list of 8 character hexadecimal codes representing the style of the image. Cannot be used in conjunction with style_reference_images or style
+
+expand_prompt boolean
+Determine if MagicPrompt should be used in generating the request or not. Default value: true
+
+num_images integer
+Number of images to generate. Default value: 1
+
+seed integer
+Seed for the random number generator
+
+sync_mode boolean
+If set to true, the function will wait for the image to be generated and uploaded before returning the response. This will increase the latency of the function but it allows you to get the image directly in the response without going through the CDN.
+
+prompt string
+The prompt to fill the masked part of the image.
+
+image_url string
+The image URL to generate an image from. Needs to match the dimensions of the mask.
+
+mask_url string
+The mask URL to inpaint the image. Needs to match the dimensions of the input image.
+
+ReframeImageInputV3
+#
+image_urls list<string>
+A set of images to use as style references (maximum total size 10MB across all style references). The images should be in JPEG, PNG or WebP format
+
+rendering_speed RenderingSpeedEnum
+The rendering speed to use. Default value: "BALANCED"
+
+Possible enum values: TURBO, BALANCED, QUALITY
+
+color_palette ColorPalette
+A color palette for generation, must EITHER be specified via one of the presets (name) or explicitly via hexadecimal representations of the color with optional weights (members)
+
+style_codes list<string>
+A list of 8 character hexadecimal codes representing the style of the image. Cannot be used in conjunction with style_reference_images or style
+
+style Enum
+The style type to generate with. Cannot be used with style_codes.
+
+Possible enum values: AUTO, GENERAL, REALISTIC, DESIGN
+
+num_images integer
+Number of images to generate. Default value: 1
+
+seed integer
+Seed for the random number generator
+
+sync_mode boolean
+If set to true, the function will wait for the image to be generated and uploaded before returning the response. This will increase the latency of the function but it allows you to get the image directly in the response without going through the CDN.
+
+image_url string
+The image URL to reframe
+
+image_size ImageSize | Enum
+The resolution for the reframed output image
+
+Possible enum values: square_hd, square, portrait_4_3, portrait_16_9, landscape_4_3, landscape_16_9
+
+Note: For custom image sizes, you can pass the width and height as an object:
+
+
+"image_size": {
+  "width": 1280,
+  "height": 720
+}
+
+
+3)fal-ai/stable-diffusion-v35-large
+About
+Generate
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/stable-diffusion-v35-large", {
+  input: {
+    prompt: "A dreamlike Japanese garden in perpetual twilight, bathed in bioluminescent cherry blossoms that emit a soft pink-purple glow. Floating paper lanterns drift lazily through the scene, their warm light creating dancing reflections in a mirror-like koi pond. Ethereal mist weaves between ancient stone pathways lined with glowing mushrooms in pastel blues and purples. A traditional wooden bridge arches gracefully over the water, dusted with fallen petals that sparkle like stardust. The scene is captured through a cinematic lens with perfect bokeh, creating an otherworldly atmosphere. In the background, a crescent moon hangs impossibly large in the sky, surrounded by a sea of stars and auroral wisps in teal and violet. Crystal formations emerge from the ground, refracting the ambient light into rainbow prisms. The entire composition follows the golden ratio, with moody film-like color grading reminiscent of Studio Ghibli, enhanced by volumetric god rays filtering through the luminous foliage. 8K resolution, masterful photography, hyperdetailed, magical realism."
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/stable-diffusion-v35-large", {
+  input: {
+    prompt: "A dreamlike Japanese garden in perpetual twilight, bathed in bioluminescent cherry blossoms that emit a soft pink-purple glow. Floating paper lanterns drift lazily through the scene, their warm light creating dancing reflections in a mirror-like koi pond. Ethereal mist weaves between ancient stone pathways lined with glowing mushrooms in pastel blues and purples. A traditional wooden bridge arches gracefully over the water, dusted with fallen petals that sparkle like stardust. The scene is captured through a cinematic lens with perfect bokeh, creating an otherworldly atmosphere. In the background, a crescent moon hangs impossibly large in the sky, surrounded by a sea of stars and auroral wisps in teal and violet. Crystal formations emerge from the ground, refracting the ambient light into rainbow prisms. The entire composition follows the golden ratio, with moody film-like color grading reminiscent of Studio Ghibli, enhanced by volumetric god rays filtering through the luminous foliage. 8K resolution, masterful photography, hyperdetailed, magical realism."
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/stable-diffusion-v35-large", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/stable-diffusion-v35-large", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+prompt string
+The prompt to generate an image from.
+
+negative_prompt string
+The negative prompt to use. Use it to address details that you don't want in the image. This could be colors, objects, scenery and even the small details (e.g. moustache, blurry, low resolution). Default value: ""
+
+num_inference_steps integer
+The number of inference steps to perform. Default value: 28
+
+seed integer
+The same seed and the same prompt given to the same version of the model will output the same image every time.
+
+guidance_scale float
+The CFG (Classifier Free Guidance) scale is a measure of how close you want the model to stick to your prompt when looking for a related image to show you. Default value: 3.5
+
+sync_mode boolean
+If set to true, the function will wait for the image to be generated and uploaded before returning the response. This will increase the latency of the function but it allows you to get the image directly in the response without going through the CDN.
+
+num_images integer
+The number of images to generate. Default value: 1
+
+enable_safety_checker boolean
+If set to true, the safety checker will be enabled. Default value: true
+
+output_format OutputFormatEnum
+The format of the generated image. Default value: "jpeg"
+
+Possible enum values: jpeg, png
+
+controlnet ControlNet
+ControlNet for inference.
+
+image_size ImageSize | Enum
+The size of the generated image. Defaults to landscape_4_3 if no controlnet has been passed, otherwise defaults to the size of the controlnet conditioning image.
+
+Possible enum values: square_hd, square, portrait_4_3, portrait_16_9, landscape_4_3, landscape_16_9
+
+Note: For custom image sizes, you can pass the width and height as an object:
+
+
+"image_size": {
+  "width": 1280,
+  "height": 720
+}
+loras list<LoraWeight>
+The LoRAs to use for the image generation. You can use any number of LoRAs and they will be merged together to generate the final image.
+
+ip_adapter IPAdapter
+IP-Adapter to use during inference.
+
+
+{
+  "prompt": "A dreamlike Japanese garden in perpetual twilight, bathed in bioluminescent cherry blossoms that emit a soft pink-purple glow. Floating paper lanterns drift lazily through the scene, their warm light creating dancing reflections in a mirror-like koi pond. Ethereal mist weaves between ancient stone pathways lined with glowing mushrooms in pastel blues and purples. A traditional wooden bridge arches gracefully over the water, dusted with fallen petals that sparkle like stardust. The scene is captured through a cinematic lens with perfect bokeh, creating an otherworldly atmosphere. In the background, a crescent moon hangs impossibly large in the sky, surrounded by a sea of stars and auroral wisps in teal and violet. Crystal formations emerge from the ground, refracting the ambient light into rainbow prisms. The entire composition follows the golden ratio, with moody film-like color grading reminiscent of Studio Ghibli, enhanced by volumetric god rays filtering through the luminous foliage. 8K resolution, masterful photography, hyperdetailed, magical realism.",
+  "negative_prompt": "",
+  "num_inference_steps": 28,
+  "guidance_scale": 3.5,
+  "num_images": 1,
+  "enable_safety_checker": true,
+  "output_format": "jpeg"
+}
+Output
+#
+images list<Image>
+The generated image files info.
+
+timings Timings
+seed integer
+Seed of the generated Image. It will be the same value of the one passed in the input or the randomly generated that was used in case none was passed.
+
+has_nsfw_concepts list<boolean>
+Whether the generated images contain NSFW concepts.
+
+prompt string
+The prompt used for generating the image.
+
+
+{
+  "images": [
+    {
+      "url": "",
+      "content_type": "image/jpeg"
+    }
+  ],
+  "prompt": ""
+}
+Other types
+#
+LoraWeight
+#
+path string
+URL or the path to the LoRA weights.
+
+scale float
+The scale of the LoRA weight. This is used to scale the LoRA weight before merging it with the base model. Default value: 1
+
+Image
+#
+url string
+width integer
+height integer
+content_type string
+Default value: "image/jpeg"
+
+IPAdapter
+#
+path string
+Hugging Face path to the IP-Adapter
+
+subfolder string
+Subfolder in which the ip_adapter weights exist
+
+weight_name string
+Name of the safetensors file containing the ip-adapter weights
+
+image_encoder_path string
+Path to the Image Encoder for the IP-Adapter, for example 'openai/clip-vit-large-patch14'
+
+image_encoder_subfolder string
+Subfolder in which the image encoder weights exist.
+
+image_encoder_weight_name string
+Name of the image encoder.
+
+image_url string
+URL of Image for IP-Adapter conditioning.
+
+mask_image_url string
+URL of the mask for the control image.
+
+mask_threshold float
+Threshold for mask. Default value: 0.5
+
+scale float
+Scale for ip adapter.
+
+ImageSize
+#
+width integer
+The width of the generated image. Default value: 512
+
+height integer
+The height of the generated image. Default value: 512
+
+ControlNet
+#
+path string
+URL or the path to the control net weights.
+
+control_image_url string
+URL of the image to be used as the control image.
+
+conditioning_scale float
+The scale of the control net weight. This is used to scale the control net weight before merging it with the base model. Default value: 1
+
+start_percentage float
+The percentage of the image to start applying the controlnet in terms of the total timesteps.
+
+end_percentage float
+The percentage of the image to end applying the controlnet in terms of the total timesteps. Default value: 1
+
+4)fal-ai/omnigen-v2
+bout
+Generate
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/omnigen-v2", {
+  input: {
+    prompt: "Make the dress blue"
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/omnigen-v2", {
+  input: {
+    prompt: "Make the dress blue"
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/omnigen-v2", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/omnigen-v2", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+prompt string
+The prompt to generate or edit an image. Use specific language like 'Add the bird from image 1 to the desk in image 2' for better results.
+
+input_image_urls list<string>
+URLs of input images to use for image editing or multi-image generation. Support up to 3 images.
+
+image_size ImageSize | Enum
+The size of the generated image. Default value: square_hd
+
+Possible enum values: square_hd, square, portrait_4_3, portrait_16_9, landscape_4_3, landscape_16_9
+
+Note: For custom image sizes, you can pass the width and height as an object:
+
+
+"image_size": {
+  "width": 1280,
+  "height": 720
+}
+num_inference_steps integer
+The number of inference steps to perform. Default value: 50
+
+seed integer
+The same seed and the same prompt given to the same version of the model will output the same image every time.
+
+text_guidance_scale float
+The Text Guidance scale controls how closely the model follows the text prompt. Higher values make the model stick more closely to the prompt. Default value: 5
+
+image_guidance_scale float
+The Image Guidance scale controls how closely the model follows the input images. For image editing: 1.3-2.0, for in-context generation: 2.0-3.0 Default value: 2
+
+negative_prompt string
+Negative prompt to guide what should not be in the image. Default value: "(((deformed))), blurry, over saturation, bad anatomy, disfigured, poorly drawn face, mutation, mutated, (extra_limb), (ugly), (poorly drawn hands), fused fingers, messy drawing, broken legs censor, censored, censor_bar"
+
+cfg_range_start float
+CFG range start value.
+
+cfg_range_end float
+CFG range end value. Default value: 1
+
+scheduler SchedulerEnum
+The scheduler to use for the diffusion process. Default value: "euler"
+
+Possible enum values: euler, dpmsolver
+
+sync_mode boolean
+If set to true, the function will wait for the image to be generated and uploaded before returning the response. This will increase the latency of the function but it allows you to get the image directly in the response without going through the CDN.
+
+num_images integer
+The number of images to generate. Default value: 1
+
+enable_safety_checker boolean
+If set to true, the safety checker will be enabled. Default value: true
+
+output_format OutputFormatEnum
+The format of the generated image. Default value: "jpeg"
+
+Possible enum values: jpeg, png
+
+
+{
+  "prompt": "Make the dress blue",
+  "input_image_urls": [
+    "https://storage.googleapis.com/falserverless/omnigen/input.png"
+  ],
+  "image_size": "square_hd",
+  "num_inference_steps": 50,
+  "text_guidance_scale": 5,
+  "image_guidance_scale": 2,
+  "negative_prompt": "(((deformed))), blurry, over saturation, bad anatomy, disfigured, poorly drawn face, mutation, mutated, (extra_limb), (ugly), (poorly drawn hands), fused fingers, messy drawing, broken legs censor, censored, censor_bar",
+  "cfg_range_end": 1,
+  "scheduler": "euler",
+  "num_images": 1,
+  "enable_safety_checker": true,
+  "output_format": "jpeg"
+}
+Output
+#
+images list<Image>
+The generated image files info.
+
+timings Timings
+seed integer
+Seed of the generated Image. It will be the same value of the one passed in the input or the randomly generated that was used in case none was passed.
+
+has_nsfw_concepts list<boolean>
+Whether the generated images contain NSFW concepts.
+
+prompt string
+The prompt used for generating the image.
+
+
+{
+  "images": [
+    {
+      "url": "",
+      "content_type": "image/jpeg"
+    }
+  ],
+  "prompt": ""
+}
+Other types
+#
+ImageSize
+#
+width integer
+The width of the generated image. Default value: 512
+
+height integer
+The height of the generated image. Default value: 512
+
+Image
+#
+url string
+width integer
+height integer
+content_type string
+Default value: "image/jpeg"
+
+5)fal-ai/imagen4/preview
+About
+Generate images using Google's Imagen 4 model.
+
+Imagen 4 is designed to generate high-quality images with enhanced detail, richer lighting, and fewer artifacts. The model excels at:
+
+Capturing fine details and textures
+Rendering diverse art styles from photorealism to animation
+Understanding natural language prompts
+Maintaining high visual quality and composition
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/imagen4/preview", {
+  input: {
+    prompt: "Capture an intimate close-up bathed in warm, soft, late-afternoon sunlight filtering into a quintessential 1960s kitchen. The focal point is a charmingly designed vintage package of all-purpose flour, resting invitingly on a speckled Formica countertop. The packaging itself evokes pure nostalgia: perhaps thick, slightly textured paper in a warm cream tone, adorned with simple, bold typography (a friendly serif or script) in classic red and blue "ALL-PURPOSE FLOUR", featuring a delightful illustration like a stylized sheaf of wheat or a cheerful baker character. In smaller bold print at the bottom of the package: "NET WT 5 LBS (80 OZ) 2.27kg". Focus sharply on the package details – the slightly soft edges of the paper bag, the texture of the vintage printing, the inviting "All-Purpose Flour" text. Subtle hints of the 1960s kitchen frame the shot – the chrome edge of the counter gleaming softly, a blurred glimpse of a pastel yellow ceramic tile backsplash, or the corner of a vintage metal canister set just out of focus. The shallow depth of field keeps attention locked on the beautifully designed package, creating an aesthetic rich in warmth, authenticity, and nostalgic appeal."
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/imagen4/preview", {
+  input: {
+    prompt: "Capture an intimate close-up bathed in warm, soft, late-afternoon sunlight filtering into a quintessential 1960s kitchen. The focal point is a charmingly designed vintage package of all-purpose flour, resting invitingly on a speckled Formica countertop. The packaging itself evokes pure nostalgia: perhaps thick, slightly textured paper in a warm cream tone, adorned with simple, bold typography (a friendly serif or script) in classic red and blue "ALL-PURPOSE FLOUR", featuring a delightful illustration like a stylized sheaf of wheat or a cheerful baker character. In smaller bold print at the bottom of the package: "NET WT 5 LBS (80 OZ) 2.27kg". Focus sharply on the package details – the slightly soft edges of the paper bag, the texture of the vintage printing, the inviting "All-Purpose Flour" text. Subtle hints of the 1960s kitchen frame the shot – the chrome edge of the counter gleaming softly, a blurred glimpse of a pastel yellow ceramic tile backsplash, or the corner of a vintage metal canister set just out of focus. The shallow depth of field keeps attention locked on the beautifully designed package, creating an aesthetic rich in warmth, authenticity, and nostalgic appeal."
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/imagen4/preview", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/imagen4/preview", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+prompt string
+The text prompt describing what you want to see
+
+negative_prompt string
+A description of what to discourage in the generated images Default value: ""
+
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated image Default value: "1:1"
+
+Possible enum values: 1:1, 16:9, 9:16, 3:4, 4:3
+
+num_images integer
+Number of images to generate (1-4) Default value: 1
+
+seed integer
+Random seed for reproducible generation
+
+
+{
+  "prompt": "Capture an intimate close-up bathed in warm, soft, late-afternoon sunlight filtering into a quintessential 1960s kitchen. The focal point is a charmingly designed vintage package of all-purpose flour, resting invitingly on a speckled Formica countertop. The packaging itself evokes pure nostalgia: perhaps thick, slightly textured paper in a warm cream tone, adorned with simple, bold typography (a friendly serif or script) in classic red and blue "ALL-PURPOSE FLOUR", featuring a delightful illustration like a stylized sheaf of wheat or a cheerful baker character. In smaller bold print at the bottom of the package: "NET WT 5 LBS (80 OZ) 2.27kg". Focus sharply on the package details – the slightly soft edges of the paper bag, the texture of the vintage printing, the inviting "All-Purpose Flour" text. Subtle hints of the 1960s kitchen frame the shot – the chrome edge of the counter gleaming softly, a blurred glimpse of a pastel yellow ceramic tile backsplash, or the corner of a vintage metal canister set just out of focus. The shallow depth of field keeps attention locked on the beautifully designed package, creating an aesthetic rich in warmth, authenticity, and nostalgic appeal.",
+  "aspect_ratio": "1:1",
+  "num_images": 1
+}
+Output
+#
+images list<File>
+seed integer
+Seed used for generation
+
+
+{
+  "images": [
+    {
+      "url": "https://v3.fal.media/files/rabbit/rmgBxhwGYb2d3pl3x9sKf_output.png"
+    }
+  ],
+  "seed": 42
+}
+Other types
+#
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data
+
+6)fal-ai/hidream-i1-fast
+About
+Generate
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/hidream-i1-fast", {
+  input: {
+    prompt: "a cat holding a skateboard which has 'fal' written on it in red spray paint"
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+Streaming
+#
+This model supports streaming requests. You can stream data directly to the model and get the result in real-time.
+
+
+import { fal } from "@fal-ai/client";
+
+const stream = await fal.stream("fal-ai/hidream-i1-fast", {
+  input: {
+    prompt: "a cat holding a skateboard which has 'fal' written on it in red spray paint"
+  }
+});
+
+for await (const event of stream) {
+  console.log(event);
+}
+
+const result = await stream.done();
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/hidream-i1-fast", {
+  input: {
+    prompt: "a cat holding a skateboard which has 'fal' written on it in red spray paint"
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/hidream-i1-fast", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/hidream-i1-fast", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+prompt string
+The prompt to generate an image from.
+
+negative_prompt string
+The negative prompt to use. Use it to address details that you don't want in the image. This could be colors, objects, scenery and even the small details (e.g. moustache, blurry, low resolution). Default value: ""
+
+image_size ImageSize | Enum
+The size of the generated image.
+
+Possible enum values: square_hd, square, portrait_4_3, portrait_16_9, landscape_4_3, landscape_16_9
+
+Note: For custom image sizes, you can pass the width and height as an object:
+
+
+"image_size": {
+  "width": 1280,
+  "height": 720
+}
+num_inference_steps integer
+The number of inference steps to perform. Default value: 16
+
+seed integer
+The same seed and the same prompt given to the same version of the model will output the same image every time.
+
+sync_mode boolean
+If set to true, the function will wait for the image to be generated and uploaded before returning the response. This will increase the latency of the function but it allows you to get the image directly in the response without going through the CDN.
+
+num_images integer
+The number of images to generate. Default value: 1
+
+enable_safety_checker boolean
+If set to true, the safety checker will be enabled. Default value: true
+
+output_format OutputFormatEnum
+The format of the generated image. Default value: "jpeg"
+
+Possible enum values: jpeg, png
+
+
+{
+  "prompt": "a cat holding a skateboard which has 'fal' written on it in red spray paint",
+  "negative_prompt": "",
+  "image_size": {
+    "height": 1024,
+    "width": 1024
+  },
+  "num_inference_steps": 16,
+  "num_images": 1,
+  "enable_safety_checker": true,
+  "output_format": "jpeg"
+}
+Output
+#
+images list<Image>
+The generated image files info.
+
+timings Timings
+seed integer
+Seed of the generated Image. It will be the same value of the one passed in the input or the randomly generated that was used in case none was passed.
+
+has_nsfw_concepts list<boolean>
+Whether the generated images contain NSFW concepts.
+
+prompt string
+The prompt used for generating the image.
+
+
+{
+  "images": [
+    {
+      "url": "",
+      "content_type": "image/jpeg"
+    }
+  ],
+  "prompt": ""
+}
+Other types
+#
+ImageSize
+#
+width integer
+The width of the generated image. Default value: 512
+
+height integer
+The height of the generated image. Default value: 512
+
+Image
+#
+url string
+width integer
+height integer
+content_type string
+Default value: "image/jpeg"
+
+7)fal-ai/flux-1/schnell
+
+About
+FLUX.1 [schnell], turbo mode for next generation text-to-image model FLUX.
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/flux-1/schnell", {
+  input: {
+    prompt: "Extreme close-up of a single tiger eye, direct frontal view. Detailed iris and pupil. Sharp focus on eye texture and color. Natural lighting to capture authentic eye shine and depth. The word "FLUX" is painted over it in big, white brush strokes with visible texture."
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/flux-1/schnell", {
+  input: {
+    prompt: "Extreme close-up of a single tiger eye, direct frontal view. Detailed iris and pupil. Sharp focus on eye texture and color. Natural lighting to capture authentic eye shine and depth. The word "FLUX" is painted over it in big, white brush strokes with visible texture."
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/flux-1/schnell", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/flux-1/schnell", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+prompt string
+The prompt to generate an image from.
+
+image_size ImageSize | Enum
+The size of the generated image. Default value: landscape_4_3
+
+Possible enum values: square_hd, square, portrait_4_3, portrait_16_9, landscape_4_3, landscape_16_9
+
+Note: For custom image sizes, you can pass the width and height as an object:
+
+
+"image_size": {
+  "width": 1280,
+  "height": 720
+}
+num_inference_steps integer
+The number of inference steps to perform. Default value: 4
+
+seed integer
+The same seed and the same prompt given to the same version of the model will output the same image every time.
+
+sync_mode boolean
+If set to true, the function will wait for the image to be generated and uploaded before returning the response. This will increase the latency of the function but it allows you to get the image directly in the response without going through the CDN.
+
+num_images integer
+The number of images to generate. Default value: 1
+
+enable_safety_checker boolean
+If set to true, the safety checker will be enabled. Default value: true
+
+output_format OutputFormatEnum
+The format of the generated image. Default value: "png"
+
+Possible enum values: jpeg, png
+
+acceleration AccelerationEnum
+The speed of the generation. The higher the speed, the faster the generation. Default value: "regular"
+
+Possible enum values: none, regular, high
+
+
+{
+  "prompt": "Extreme close-up of a single tiger eye, direct frontal view. Detailed iris and pupil. Sharp focus on eye texture and color. Natural lighting to capture authentic eye shine and depth. The word "FLUX" is painted over it in big, white brush strokes with visible texture.",
+  "image_size": "landscape_4_3",
+  "num_inference_steps": 4,
+  "num_images": 1,
+  "enable_safety_checker": true,
+  "output_format": "png",
+  "acceleration": "regular"
+}
+Output
+#
+images list<Image>
+The generated image files info.
+
+timings Timings
+seed integer
+Seed of the generated Image. It will be the same value of the one passed in the input or the randomly generated that was used in case none was passed.
+
+has_nsfw_concepts list<boolean>
+Whether the generated images contain NSFW concepts.
+
+prompt string
+The prompt used for generating the image.
+
+
+{
+  "images": [
+    {
+      "url": "",
+      "content_type": "image/jpeg"
+    }
+  ],
+  "prompt": ""
+}
+Other types
+#
+ImageSize
+#
+width integer
+The width of the generated image. Default value: 512
+
+height integer
+The height of the generated image. Default value: 512
+
+Image
+#
+url string
+width integer
+height integer
+content_type string
+Default value: "image/jpeg"
+
+8)fal-ai/imagen4/preview/fast
+About
+Generate images using Google's Imagen 4 Fast model.
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/imagen4/preview/fast", {
+  input: {
+    prompt: "Atmospheric narrative illustration depicting a young woman with dark hair styled with a single star clip, eating dumplings at a small round table in a bustling, late-night eatery reminiscent of a vintage Hong Kong diner. The style blends clean linework with textured color fields, evoking a sense of place and story. The mood is intimate contentment amidst vibrant surroundings. Soft, warm overhead lighting from unseen hanging lamps casts gentle highlights on her face and the porcelain plate of dumplings, creating soft-edged shadows on the tiled tabletop and floor. The background features detailed elements like wall menus with stylized illustrations, a retro wall clock, steam rising from a soup bowl, and glimpses of other patrons blurred slightly for depth. The woman, viewed from a slightly high angle, crouches slightly on her chair, intensely focused on her food, rendered with expressive linework defining her pose and features. The color palette mixes muted teal wall tiles and green chairs with pops of warm yellow in her top, pink trousers, red chili oil dish, and ambient light, creating a cozy yet lively feel. Subtle paper texture or digital grain is visible throughout. Focus is sharp on the character and her immediate table setting"
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/imagen4/preview/fast", {
+  input: {
+    prompt: "Atmospheric narrative illustration depicting a young woman with dark hair styled with a single star clip, eating dumplings at a small round table in a bustling, late-night eatery reminiscent of a vintage Hong Kong diner. The style blends clean linework with textured color fields, evoking a sense of place and story. The mood is intimate contentment amidst vibrant surroundings. Soft, warm overhead lighting from unseen hanging lamps casts gentle highlights on her face and the porcelain plate of dumplings, creating soft-edged shadows on the tiled tabletop and floor. The background features detailed elements like wall menus with stylized illustrations, a retro wall clock, steam rising from a soup bowl, and glimpses of other patrons blurred slightly for depth. The woman, viewed from a slightly high angle, crouches slightly on her chair, intensely focused on her food, rendered with expressive linework defining her pose and features. The color palette mixes muted teal wall tiles and green chairs with pops of warm yellow in her top, pink trousers, red chili oil dish, and ambient light, creating a cozy yet lively feel. Subtle paper texture or digital grain is visible throughout. Focus is sharp on the character and her immediate table setting"
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/imagen4/preview/fast", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/imagen4/preview/fast", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+prompt string
+The text prompt describing what you want to see
+
+negative_prompt string
+A description of what to discourage in the generated images Default value: ""
+
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated image Default value: "1:1"
+
+Possible enum values: 1:1, 16:9, 9:16, 3:4, 4:3
+
+num_images integer
+Number of images to generate (1-4) Default value: 1
+
+seed integer
+Random seed for reproducible generation
+
+
+{
+  "prompt": "Atmospheric narrative illustration depicting a young woman with dark hair styled with a single star clip, eating dumplings at a small round table in a bustling, late-night eatery reminiscent of a vintage Hong Kong diner. The style blends clean linework with textured color fields, evoking a sense of place and story. The mood is intimate contentment amidst vibrant surroundings. Soft, warm overhead lighting from unseen hanging lamps casts gentle highlights on her face and the porcelain plate of dumplings, creating soft-edged shadows on the tiled tabletop and floor. The background features detailed elements like wall menus with stylized illustrations, a retro wall clock, steam rising from a soup bowl, and glimpses of other patrons blurred slightly for depth. The woman, viewed from a slightly high angle, crouches slightly on her chair, intensely focused on her food, rendered with expressive linework defining her pose and features. The color palette mixes muted teal wall tiles and green chairs with pops of warm yellow in her top, pink trousers, red chili oil dish, and ambient light, creating a cozy yet lively feel. Subtle paper texture or digital grain is visible throughout. Focus is sharp on the character and her immediate table setting",
+  "aspect_ratio": "1:1",
+  "num_images": 1
+}
+Output
+#
+images list<File>
+seed integer
+Seed used for generation
+
+
+{
+  "images": [
+    {
+      "url": "https://v3.fal.media/files/elephant/MNWc2sdR8v_VLWqVp7ag8_output.png"
+    }
+  ],
+  "seed": 42
+}
+Other types
+#
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data
+
+Related Models
+
+9)fal-ai/recraft/v2/text-to-image
+
+About
+Recraft V2
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/recraft/v2/text-to-image", {
+  input: {
+    prompt: "a red panda in Kyoto"
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/recraft/v2/text-to-image", {
+  input: {
+    prompt: "a red panda in Kyoto"
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/recraft/v2/text-to-image", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/recraft/v2/text-to-image", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+prompt string
+image_size ImageSize | Enum
+Default value: square_hd
+
+Possible enum values: square_hd, square, portrait_4_3, portrait_16_9, landscape_4_3, landscape_16_9
+
+Note: For custom image sizes, you can pass the width and height as an object:
+
+
+"image_size": {
+  "width": 1280,
+  "height": 720
+}
+style StyleEnum
+The style of the generated images. Vector images cost 2X as much. Default value: "realistic_image"
+
+Possible enum values: any, realistic_image, digital_illustration, vector_illustration, realistic_image/b_and_w, realistic_image/enterprise, realistic_image/hard_flash, realistic_image/hdr, realistic_image/motion_blur, realistic_image/natural_light, realistic_image/studio_portrait, digital_illustration/2d_art_poster, digital_illustration/2d_art_poster_2, digital_illustration/3d, digital_illustration/80s, digital_illustration/engraving_color, digital_illustration/glow, digital_illustration/grain, digital_illustration/hand_drawn, digital_illustration/hand_drawn_outline, digital_illustration/handmade_3d, digital_illustration/infantile_sketch, digital_illustration/kawaii, digital_illustration/pixel_art, digital_illustration/psychedelic, digital_illustration/seamless, digital_illustration/voxel, digital_illustration/watercolor, vector_illustration/cartoon, vector_illustration/doodle_line_art, vector_illustration/engraving, vector_illustration/flat_2, vector_illustration/kawaii, vector_illustration/line_art, vector_illustration/line_circuit, vector_illustration/linocut, vector_illustration/seamless, icon/broken_line, icon/colored_outline, icon/colored_shapes, icon/colored_shapes_gradient, icon/doodle_fill, icon/doodle_offset_fill, icon/offset_fill, icon/outline, icon/outline_gradient, icon/uneven_fill
+
+colors list<RGBColor>
+An array of preferable colors
+
+style_id string
+The ID of the custom style reference (optional)
+
+enable_safety_checker boolean
+If set to true, the safety checker will be enabled.
+
+
+{
+  "prompt": "a red panda in Kyoto",
+  "image_size": "square_hd",
+  "style": "realistic_image",
+  "colors": []
+}
+Output
+#
+images list<File>
+
+{
+  "images": [
+    {
+      "url": "https://fal.media/files/penguin/852yy3l5DGLmrwAK42RTB_image.webp"
+    }
+  ]
+}
+Other types
+#
+RGBColor
+#
+r integer
+Red color value
+
+g integer
+Green color value
+
+b integer
+Blue color value
+
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data
+
+ImageSize
+#
+width integer
+The width of the generated image. Default value: 512
+
+height integer
+The height of the generated image. Default value: 512
+
+
+10)fal-ai/f-lite/standard
+About
+F-Lite
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/f-lite/standard", {
+  input: {
+    prompt: "Mount Fuji at sunset, with the iconic snow-capped peak silhouetted against a vibrant orange and purple sky. A tranquil lake in the foreground perfectly reflects the mountain and colorful sky. A few traditional Japanese cherry blossom trees frame the scene, with their delicate pink petals visible in the foreground."
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/f-lite/standard", {
+  input: {
+    prompt: "Mount Fuji at sunset, with the iconic snow-capped peak silhouetted against a vibrant orange and purple sky. A tranquil lake in the foreground perfectly reflects the mountain and colorful sky. A few traditional Japanese cherry blossom trees frame the scene, with their delicate pink petals visible in the foreground."
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/f-lite/standard", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/f-lite/standard", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+prompt string
+The prompt to generate an image from.
+
+negative_prompt string
+Negative Prompt for generation. Default value: ""
+
+image_size ImageSize | Enum
+The size of the generated image. Default value: landscape_4_3
+
+Possible enum values: square_hd, square, portrait_4_3, portrait_16_9, landscape_4_3, landscape_16_9
+
+Note: For custom image sizes, you can pass the width and height as an object:
+
+
+"image_size": {
+  "width": 1280,
+  "height": 720
+}
+num_inference_steps integer
+The number of inference steps to perform. Default value: 28
+
+seed integer
+The same seed and the same prompt given to the same version of the model will output the same image every time.
+
+guidance_scale float
+The CFG (Classifier Free Guidance) scale is a measure of how close you want the model to stick to your prompt when looking for a related image to show you. Default value: 3.5
+
+sync_mode boolean
+If set to true, the function will wait for the image to be generated and uploaded before returning the response. This will increase the latency of the function but it allows you to get the image directly in the response without going through the CDN.
+
+num_images integer
+The number of images to generate. Default value: 1
+
+enable_safety_checker boolean
+If set to true, the safety checker will be enabled. Default value: true
+
+
+{
+  "prompt": "Mount Fuji at sunset, with the iconic snow-capped peak silhouetted against a vibrant orange and purple sky. A tranquil lake in the foreground perfectly reflects the mountain and colorful sky. A few traditional Japanese cherry blossom trees frame the scene, with their delicate pink petals visible in the foreground.",
+  "negative_prompt": "Blurry, out of focus, low resolution, bad anatomy, ugly, deformed, poorly drawn, extra limbs",
+  "image_size": "landscape_4_3",
+  "num_inference_steps": 28,
+  "guidance_scale": 3.5,
+  "num_images": 1,
+  "enable_safety_checker": true
+}
+Output
+#
+images list<Image>
+The generated image files info.
+
+timings Timings
+seed integer
+Seed of the generated Image. It will be the same value of the one passed in the input or the randomly generated that was used in case none was passed.
+
+has_nsfw_concepts list<boolean>
+Whether the generated images contain NSFW concepts.
+
+prompt string
+The prompt used for generating the image.
+
+
+{
+  "images": [
+    {
+      "url": "",
+      "content_type": "image/jpeg"
+    }
+  ],
+  "prompt": ""
+}
+Other types
+#
+TextToImageInputTexture
+#
+prompt string
+The prompt to generate an image from.
+
+negative_prompt string
+Negative Prompt for generation. Default value: ""
+
+image_size ImageSize | Enum
+The size of the generated image. Default value: landscape_4_3
+
+Possible enum values: square_hd, square, portrait_4_3, portrait_16_9, landscape_4_3, landscape_16_9
+
+Note: For custom image sizes, you can pass the width and height as an object:
+
+
+"image_size": {
+  "width": 1280,
+  "height": 720
+}
+num_inference_steps integer
+The number of inference steps to perform. Default value: 28
+
+seed integer
+The same seed and the same prompt given to the same version of the model will output the same image every time.
+
+guidance_scale float
+The CFG (Classifier Free Guidance) scale is a measure of how close you want the model to stick to your prompt when looking for a related image to show you. Default value: 3.5
+
+sync_mode boolean
+If set to true, the function will wait for the image to be generated and uploaded before returning the response. This will increase the latency of the function but it allows you to get the image directly in the response without going through the CDN.
+
+num_images integer
+The number of images to generate. Default value: 1
+
+enable_safety_checker boolean
+If set to true, the safety checker will be enabled. Default value: true
+
+ImageSize
+#
+width integer
+The width of the generated image. Default value: 512
+
+height integer
+The height of the generated image. Default value: 512
+
+Image
+#
+url string
+width integer
+height integer
+content_type string
+Default value: "image/jpeg"
+

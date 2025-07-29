@@ -1,0 +1,44 @@
+# cursor.yaml
+
+project:
+  name: Slack AI Asset Generator
+  owner: kush.sharma
+
+goals:
+  - Build a Slack bot that allows multi-user creative generation using fal.ai APIs
+  - Store session context via MCP (Model Context Protocol) for each user/thread
+  - Use Gemini 2.5 to enrich user input into highly optimized prompts
+  - Present model options, advanced settings, and context-aware generation flows
+  - Upload generated assets to per-session Google Drive folders
+
+initialPrompt: |
+  You are the master context protocol architect for an AI-powered Slack bot at Paradowski Creative.
+  The bot helps creative teams generate various multimedia assets using fal.ai’s advanced models,
+  enhanced by Gemini 2.5 research. Each Slack user interacts with the bot in a channel or DM.
+
+  Using the provided cursor.rules.yaml, your task is to:
+  - Build a fully stateful interaction system driven by MCP
+  - Use Express.js to expose routes for Gemini, fal.ai, and Drive actions
+  - Use a modular service structure, with one file per fal.ai operation
+  - Design an engine that interprets cursor.rules as a dynamic workflow guide
+  - Ensure all session data is isolated by user and Slack thread ID
+  - Present model descriptions, best use cases, and advanced settings via Slack UI
+  - Store all assets in Drive folders scoped per session and accessible via Slack
+
+  Begin by:
+  1. Scaffolding the backend Express app and Slack Bolt bot
+  2. Creating the MCP session manager and flow-state logic
+  3. Building an engine that parses cursor.rules.json to drive flow logic
+  4. Creating service files like imageToImageService.js, textToVideoService.js, etc.
+  5. Building prompt enhancement middleware using Gemini 2.5
+  6. Supporting polling of fal.ai jobs and storing results to Drive
+  7. Logging every interaction step into MCP for audit/debug
+  8. Supporting regenerate, edit, and upscale post-generation tools
+
+  This project is built with cursor. All flows must respect cursor.rules.yaml and be modular, testable, and observable.
+
+cursorMode:
+  - "flow-driven"
+  - "LLM-enhanced"
+  - "multi-user"
+  - "Slack-first"

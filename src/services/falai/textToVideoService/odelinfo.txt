@@ -1,0 +1,3293 @@
+Model 1 -- fal-ai/kling-video/v2/master/text-to-video
+About
+Kling 2.0 Master Text to Video API.
+
+The Kling 2.0 Master model is an upgraded version of the text-to-video generation model that significantly improves upon Kling 1.6 in several key areas:
+
+Text Understanding:
+
+Enhanced execution of actions and camera movements
+Support for more complex sequential shot descriptions
+Ability to generate blockbuster-quality scenes from text
+Motion Quality:
+
+More dynamic character and subject movements
+Smoother motion and transitions
+Natural and logical complex action sequences
+Visual Quality:
+
+Lifelike characters with realistic movements and expressions
+Highly detailed scene generation from cinematic descriptions
+Better preservation of artistic style and aesthetics
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/kling-video/v2/master/text-to-video", {
+  input: {
+    prompt: "A slow-motion drone shot descending from above a maze of neon-lit Tokyo alleyways at night during heavy rainfall. The camera gradually focuses on a lone figure in a luminescent white raincoat standing perfectly still amid the bustling crowd, all carrying black umbrellas. As the camera continues its downward journey, we see the raindrops creating rippling patterns on puddles that reflect the kaleidoscope of colors from the surrounding signs, creating a mirror world beneath the city."
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/kling-video/v2/master/text-to-video", {
+  input: {
+    prompt: "A slow-motion drone shot descending from above a maze of neon-lit Tokyo alleyways at night during heavy rainfall. The camera gradually focuses on a lone figure in a luminescent white raincoat standing perfectly still amid the bustling crowd, all carrying black umbrellas. As the camera continues its downward journey, we see the raindrops creating rippling patterns on puddles that reflect the kaleidoscope of colors from the surrounding signs, creating a mirror world beneath the city."
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/kling-video/v2/master/text-to-video", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/kling-video/v2/master/text-to-video", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+prompt string
+duration DurationEnum
+The duration of the generated video in seconds Default value: "5"
+
+Possible enum values: 5, 10
+
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video frame Default value: "16:9"
+
+Possible enum values: 16:9, 9:16, 1:1
+
+negative_prompt string
+Default value: "blur, distort, and low quality"
+
+cfg_scale float
+The CFG (Classifier Free Guidance) scale is a measure of how close you want the model to stick to your prompt. Default value: 0.5
+
+
+{
+  "prompt": "A slow-motion drone shot descending from above a maze of neon-lit Tokyo alleyways at night during heavy rainfall. The camera gradually focuses on a lone figure in a luminescent white raincoat standing perfectly still amid the bustling crowd, all carrying black umbrellas. As the camera continues its downward journey, we see the raindrops creating rippling patterns on puddles that reflect the kaleidoscope of colors from the surrounding signs, creating a mirror world beneath the city.",
+  "duration": "5",
+  "aspect_ratio": "16:9",
+  "negative_prompt": "blur, distort, and low quality",
+  "cfg_scale": 0.5
+}
+Output
+#
+video File
+The generated video
+
+
+{
+  "video": {
+    "url": "https://v3.fal.media/files/rabbit/5fu6OSZdvV825r2s_c0S8_output.mp4"
+  }
+}
+Other types
+#
+TextToVideoV21MasterRequest
+#
+prompt string
+duration DurationEnum
+The duration of the generated video in seconds Default value: "5"
+
+Possible enum values: 5, 10
+
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video frame Default value: "16:9"
+
+Possible enum values: 16:9, 9:16, 1:1
+
+negative_prompt string
+Default value: "blur, distort, and low quality"
+
+cfg_scale float
+The CFG (Classifier Free Guidance) scale is a measure of how close you want the model to stick to your prompt. Default value: 0.5
+
+V1TextToVideoRequest
+#
+prompt string
+duration DurationEnum
+The duration of the generated video in seconds Default value: "5"
+
+Possible enum values: 5, 10
+
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video frame Default value: "16:9"
+
+Possible enum values: 16:9, 9:16, 1:1
+
+negative_prompt string
+Default value: "blur, distort, and low quality"
+
+cfg_scale float
+The CFG (Classifier Free Guidance) scale is a measure of how close you want the model to stick to your prompt. Default value: 0.5
+
+camera_control CameraControlEnum
+Camera control parameters
+
+Possible enum values: down_back, forward_up, right_turn_forward, left_turn_forward
+
+advanced_camera_control CameraControl
+Advanced Camera control parameters
+
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data
+
+ImageToVideoRequest
+#
+prompt string
+image_url string
+duration DurationEnum
+The duration of the generated video in seconds Default value: "5"
+
+Possible enum values: 5, 10
+
+negative_prompt string
+Default value: "blur, distort, and low quality"
+
+cfg_scale float
+The CFG (Classifier Free Guidance) scale is a measure of how close you want the model to stick to your prompt. Default value: 0.5
+
+ProImageToVideoRequest
+#
+prompt string
+image_url string
+duration DurationEnum
+The duration of the generated video in seconds Default value: "5"
+
+Possible enum values: 5, 10
+
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video frame Default value: "16:9"
+
+Possible enum values: 16:9, 9:16, 1:1
+
+tail_image_url string
+URL of the image to be used for the end of the video
+
+negative_prompt string
+Default value: "blur, distort, and low quality"
+
+cfg_scale float
+The CFG (Classifier Free Guidance) scale is a measure of how close you want the model to stick to your prompt. Default value: 0.5
+
+LipsyncA2VRequest
+#
+video_url string
+The URL of the video to generate the lip sync for.
+
+audio_url string
+The URL of the audio to generate the lip sync for.
+
+ImageToVideoV21MasterRequest
+#
+prompt string
+image_url string
+URL of the image to be used for the video
+
+duration DurationEnum
+The duration of the generated video in seconds Default value: "5"
+
+Possible enum values: 5, 10
+
+negative_prompt string
+Default value: "blur, distort, and low quality"
+
+cfg_scale float
+The CFG (Classifier Free Guidance) scale is a measure of how close you want the model to stick to your prompt. Default value: 0.5
+
+CameraControl
+#
+movement_type MovementTypeEnum
+The type of camera movement
+
+Possible enum values: horizontal, vertical, pan, tilt, roll, zoom
+
+movement_value integer
+The value of the camera movement
+
+ImageToVideoV21StandardRequest
+#
+prompt string
+image_url string
+URL of the image to be used for the video
+
+duration DurationEnum
+The duration of the generated video in seconds Default value: "5"
+
+Possible enum values: 5, 10
+
+negative_prompt string
+Default value: "blur, distort, and low quality"
+
+cfg_scale float
+The CFG (Classifier Free Guidance) scale is a measure of how close you want the model to stick to your prompt. Default value: 0.5
+
+ImageToVideoV21ProRequest
+#
+prompt string
+image_url string
+URL of the image to be used for the video
+
+duration DurationEnum
+The duration of the generated video in seconds Default value: "5"
+
+Possible enum values: 5, 10
+
+negative_prompt string
+Default value: "blur, distort, and low quality"
+
+cfg_scale float
+The CFG (Classifier Free Guidance) scale is a measure of how close you want the model to stick to your prompt. Default value: 0.5
+
+LipsyncT2VRequest
+#
+video_url string
+The URL of the video to generate the lip sync for.
+
+text string
+Text content for lip-sync video generation. Max 120 characters.
+
+voice_id VoiceIdEnum
+Voice ID to use for speech synthesis
+
+Possible enum values: genshin_vindi2, zhinen_xuesheng, AOT, ai_shatang, genshin_klee2, genshin_kirara, ai_kaiya, oversea_male1, ai_chenjiahao_712, girlfriend_4_speech02, chat1_female_new-3, chat_0407_5-1, cartoon-boy-07, uk_boy1, cartoon-girl-01, PeppaPig_platform, ai_huangzhong_712, ai_huangyaoshi_712, ai_laoguowang_712, chengshu_jiejie, you_pingjing, calm_story1, uk_man2, laopopo_speech02, heainainai_speech02, reader_en_m-v1, commercial_lady_en_f-v1, tiyuxi_xuedi, tiexin_nanyou, girlfriend_1_speech02, girlfriend_2_speech02, zhuxi_speech02, uk_oldman3, dongbeilaotie_speech02, chongqingxiaohuo_speech02, chuanmeizi_speech02, chaoshandashu_speech02, ai_taiwan_man2_speech02, xianzhanggui_speech02, tianjinjiejie_speech02, diyinnansang_DB_CN_M_04-v2, yizhipiannan-v1, guanxiaofang-v2, tianmeixuemei-v1, daopianyansang-v1, mengwa-v1
+
+voice_language VoiceLanguageEnum
+The voice language corresponding to the Voice ID Default value: "en"
+
+Possible enum values: zh, en
+
+voice_speed float
+Speech rate for Text to Video generation Default value: 1
+
+V1ImageToVideoRequest
+#
+prompt string
+The prompt for the video
+
+image_url string
+URL of the image to be used for the video
+
+duration DurationEnum
+The duration of the generated video in seconds Default value: "5"
+
+Possible enum values: 5, 10
+
+negative_prompt string
+Default value: "blur, distort, and low quality"
+
+cfg_scale float
+The CFG (Classifier Free Guidance) scale is a measure of how close you want the model to stick to your prompt. Default value: 0.5
+
+tail_image_url string
+URL of the image to be used for the end of the video
+
+static_mask_url string
+URL of the image for Static Brush Application Area (Mask image created by users using the motion brush)
+
+dynamic_masks list<DynamicMask>
+List of dynamic masks
+
+DynamicMask
+#
+mask_url string
+URL of the image for Dynamic Brush Application Area (Mask image created by users using the motion brush)
+
+trajectories list<Trajectory>
+List of trajectories
+
+TextToVideoRequest
+#
+prompt string
+duration DurationEnum
+The duration of the generated video in seconds Default value: "5"
+
+Possible enum values: 5, 10
+
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video frame Default value: "16:9"
+
+Possible enum values: 16:9, 9:16, 1:1
+
+negative_prompt string
+Default value: "blur, distort, and low quality"
+
+cfg_scale float
+The CFG (Classifier Free Guidance) scale is a measure of how close you want the model to stick to your prompt. Default value: 0.5
+
+VideoEffectsRequest
+#
+input_image_urls list<string>
+URL of images to be used for hug, kiss or heart_gesture video.
+
+effect_scene EffectSceneEnum
+The effect scene to use for the video generation
+
+Possible enum values: hug, kiss, heart_gesture, squish, expansion, fuzzyfuzzy, bloombloom, dizzydizzy
+
+duration DurationEnum
+The duration of the generated video in seconds Default value: "5"
+
+Possible enum values: 5, 10
+
+MultiImageToVideoRequest
+#
+prompt string
+input_image_urls list<string>
+List of image URLs to use for video generation. Supports up to 4 images.
+
+duration DurationEnum
+The duration of the generated video in seconds Default value: "5"
+
+Possible enum values: 5, 10
+
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video frame Default value: "16:9"
+
+Possible enum values: 16:9, 9:16, 1:1
+
+negative_prompt string
+Default value: "blur, distort, and low quality"
+
+Trajectory
+#
+x integer
+X coordinate of the motion trajectory
+
+y integer
+Y coordinate of the motion trajectory
+
+ImageToVideoV2MasterRequest
+#
+prompt string
+image_url string
+URL of the image to be used for the video
+
+duration DurationEnum
+The duration of the generated video in seconds Default value: "5"
+
+Possible enum values: 5, 10
+
+negative_prompt string
+Default value: "blur, distort, and low quality"
+
+cfg_scale float
+The CFG (Classifier Free Guidance) scale is a measure of how close you want the model to stick to your prompt. Default value: 0.5
+
+model 2 fal-ai/bytedance/seedance/v1/pro/text-to-video
+About
+Generate videos from text using Bytedance's Seedance 1.0 Pro model.
+
+Seedance 1.0 Pro that generates high-quality videos from text prompts. It supports multiple aspect ratios, resolutions, and durations for versatile video generation.
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/bytedance/seedance/v1/pro/text-to-video", {
+  input: {
+    prompt: "A bright blue race car speeds along a snowy racetrack. [Low-angle shot] Captures several cars speeding along the racetrack through a harsh snowstorm. [Overhead shot] The camera gradually pulls upward, revealing the full race scene illuminated by storm lights"
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/bytedance/seedance/v1/pro/text-to-video", {
+  input: {
+    prompt: "A bright blue race car speeds along a snowy racetrack. [Low-angle shot] Captures several cars speeding along the racetrack through a harsh snowstorm. [Overhead shot] The camera gradually pulls upward, revealing the full race scene illuminated by storm lights"
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/bytedance/seedance/v1/pro/text-to-video", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/bytedance/seedance/v1/pro/text-to-video", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+prompt string
+The text prompt used to generate the video
+
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video Default value: "16:9"
+
+Possible enum values: 21:9, 16:9, 4:3, 1:1, 3:4, 9:16
+
+resolution ResolutionEnum
+Video resolution - 480p for faster generation, 1080p for higher quality Default value: "1080p"
+
+Possible enum values: 480p, 1080p
+
+duration DurationEnum
+Duration of the video in seconds Default value: "5"
+
+Possible enum values: 5, 10
+
+camera_fixed boolean
+Whether to fix the camera position
+
+seed integer
+Random seed to control video generation. Use -1 for random.
+
+
+{
+  "prompt": "A bright blue race car speeds along a snowy racetrack. [Low-angle shot] Captures several cars speeding along the racetrack through a harsh snowstorm. [Overhead shot] The camera gradually pulls upward, revealing the full race scene illuminated by storm lights",
+  "aspect_ratio": "16:9",
+  "resolution": "1080p",
+  "duration": "5"
+}
+Output
+#
+video File
+Generated video file
+
+seed integer
+Seed used for generation
+
+
+{
+  "video": {
+    "url": "https://storage.googleapis.com/falserverless/example_inputs/seedance_pro_t2v.mp4"
+  },
+  "seed": 42
+}
+Other types
+#
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data
+
+Image
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data
+
+width integer
+The width of the image in pixels.
+
+height integer
+The height of the image in pixels.
+
+ImageSize
+#
+width integer
+The width of the generated image. Default value: 512
+
+height integer
+The height of the generated image. Default value: 512
+
+model 3 fal-ai/pixverse/v4/text-to-video/fast
+
+About
+Text To Video Fast V4
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/pixverse/v4/text-to-video/fast", {
+  input: {
+    prompt: "Epic low-cut camera capture of a girl clad in ultraviolet threads, Peter Max art style depiction, luminous diamond skin glistening under a vast moon's radiance, embodied in a superhuman flight among mystical ruins, symbolizing a deity's ritual ascent, hyper-detailed"
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/pixverse/v4/text-to-video/fast", {
+  input: {
+    prompt: "Epic low-cut camera capture of a girl clad in ultraviolet threads, Peter Max art style depiction, luminous diamond skin glistening under a vast moon's radiance, embodied in a superhuman flight among mystical ruins, symbolizing a deity's ritual ascent, hyper-detailed"
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/pixverse/v4/text-to-video/fast", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/pixverse/v4/text-to-video/fast", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+prompt string
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video Default value: "16:9"
+
+Possible enum values: 16:9, 4:3, 1:1, 3:4, 9:16
+
+resolution ResolutionEnum
+The resolution of the generated video Default value: "720p"
+
+Possible enum values: 360p, 540p, 720p
+
+negative_prompt string
+Negative prompt to be used for the generation Default value: ""
+
+style StyleEnum
+The style of the generated video
+
+Possible enum values: anime, 3d_animation, clay, comic, cyberpunk
+
+seed integer
+The same seed and the same prompt given to the same version of the model will output the same video every time.
+
+
+{
+  "prompt": "Epic low-cut camera capture of a girl clad in ultraviolet threads, Peter Max art style depiction, luminous diamond skin glistening under a vast moon's radiance, embodied in a superhuman flight among mystical ruins, symbolizing a deity's ritual ascent, hyper-detailed",
+  "aspect_ratio": "16:9",
+  "resolution": "720p",
+  "negative_prompt": "blurry, low quality, low resolution, pixelated, noisy, grainy, out of focus, poorly lit, poorly exposed, poorly composed, poorly framed, poorly cropped, poorly color corrected, poorly color graded"
+}
+Output
+#
+video File
+The generated video
+
+
+{
+  "video": {
+    "file_size": 5485412,
+    "file_name": "output.mp4",
+    "content_type": "video/mp4",
+    "url": "https://fal.media/files/lion/_fVEU5nzHND_fHGQUhXEm_output.mp4"
+  }
+}
+Other types
+#
+ExtendRequest
+#
+video_url string
+URL of the input video to extend
+
+prompt string
+Prompt describing how to extend the video
+
+negative_prompt string
+Negative prompt to be used for the generation Default value: ""
+
+style StyleEnum
+The style of the extended video
+
+Possible enum values: anime, 3d_animation, day, cyberpunk, comic
+
+resolution ResolutionEnum
+The resolution of the generated video Default value: "720p"
+
+Possible enum values: 360p, 540p, 720p, 1080p
+
+duration DurationEnum
+The duration of the generated video in seconds. 1080p videos are limited to 5 seconds Default value: "5"
+
+Possible enum values: 5, 8
+
+model ModelEnum
+The model version to use for generation Default value: "v4.5"
+
+Possible enum values: v3.5, v4, v4.5
+
+seed integer
+Random seed for generation
+
+TextToVideoRequest
+#
+prompt string
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video Default value: "16:9"
+
+Possible enum values: 16:9, 4:3, 1:1, 3:4, 9:16
+
+resolution ResolutionEnum
+The resolution of the generated video Default value: "720p"
+
+Possible enum values: 360p, 540p, 720p, 1080p
+
+duration DurationEnum
+The duration of the generated video in seconds. 8s videos cost double. 1080p videos are limited to 5 seconds Default value: "5"
+
+Possible enum values: 5, 8
+
+negative_prompt string
+Negative prompt to be used for the generation Default value: ""
+
+style StyleEnum
+The style of the generated video
+
+Possible enum values: anime, 3d_animation, clay, comic, cyberpunk
+
+seed integer
+The same seed and the same prompt given to the same version of the model will output the same video every time.
+
+I2VOutputV4
+#
+video File
+The generated video
+
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data
+
+ImageToVideoRequest
+#
+prompt string
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video Default value: "16:9"
+
+Possible enum values: 16:9, 4:3, 1:1, 3:4, 9:16
+
+resolution ResolutionEnum
+The resolution of the generated video Default value: "720p"
+
+Possible enum values: 360p, 540p, 720p, 1080p
+
+duration DurationEnum
+The duration of the generated video in seconds. 8s videos cost double. 1080p videos are limited to 5 seconds Default value: "5"
+
+Possible enum values: 5, 8
+
+negative_prompt string
+Negative prompt to be used for the generation Default value: ""
+
+style StyleEnum
+The style of the generated video
+
+Possible enum values: anime, 3d_animation, clay, comic, cyberpunk
+
+seed integer
+The same seed and the same prompt given to the same version of the model will output the same video every time.
+
+image_url string
+URL of the image to use as the first frame
+
+TransitionRequest
+#
+prompt string
+The prompt for the transition
+
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video Default value: "16:9"
+
+Possible enum values: 16:9, 4:3, 1:1, 3:4, 9:16
+
+resolution ResolutionEnum
+The resolution of the generated video Default value: "720p"
+
+Possible enum values: 360p, 540p, 720p, 1080p
+
+duration DurationEnum
+The duration of the generated video in seconds Default value: "5"
+
+Possible enum values: 5, 8
+
+negative_prompt string
+Negative prompt to be used for the generation Default value: ""
+
+style StyleEnum
+The style of the generated video
+
+Possible enum values: anime, 3d_animation, clay, comic, cyberpunk
+
+seed integer
+The same seed and the same prompt given to the same version of the model will output the same video every time.
+
+first_image_url string
+URL of the image to use as the first frame
+
+last_image_url string
+URL of the image to use as the last frame
+
+FastImageToVideoRequestV4
+#
+prompt string
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video Default value: "16:9"
+
+Possible enum values: 16:9, 4:3, 1:1, 3:4, 9:16
+
+resolution ResolutionEnum
+The resolution of the generated video Default value: "720p"
+
+Possible enum values: 360p, 540p, 720p
+
+negative_prompt string
+Negative prompt to be used for the generation Default value: ""
+
+style StyleEnum
+The style of the generated video
+
+Possible enum values: anime, 3d_animation, clay, comic, cyberpunk
+
+seed integer
+The same seed and the same prompt given to the same version of the model will output the same video every time.
+
+image_url string
+URL of the image to use as the first frame
+
+ImageToVideoRequestV4
+#
+prompt string
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video Default value: "16:9"
+
+Possible enum values: 16:9, 4:3, 1:1, 3:4, 9:16
+
+resolution ResolutionEnum
+The resolution of the generated video Default value: "720p"
+
+Possible enum values: 360p, 540p, 720p, 1080p
+
+duration DurationEnum
+The duration of the generated video in seconds. 8s videos cost double. 1080p videos are limited to 5 seconds Default value: "5"
+
+Possible enum values: 5, 8
+
+negative_prompt string
+Negative prompt to be used for the generation Default value: ""
+
+style StyleEnum
+The style of the generated video
+
+Possible enum values: anime, 3d_animation, clay, comic, cyberpunk
+
+seed integer
+The same seed and the same prompt given to the same version of the model will output the same video every time.
+
+image_url string
+URL of the image to use as the first frame
+
+SoundEffectRequest
+#
+video_url string
+URL of the input video to add sound effects to
+
+original_sound_switch boolean
+Whether to keep the original audio from the video
+
+prompt string
+Description of the sound effect to generate. If empty, a random sound effect will be generated Default value: ""
+
+LipsyncRequest
+#
+video_url string
+URL of the input video
+
+audio_url string
+URL of the input audio. If not provided, TTS will be used.
+
+voice_id VoiceIdEnum
+Voice to use for TTS when audio_url is not provided Default value: "Auto"
+
+Possible enum values: Emily, James, Isabella, Liam, Chloe, Adrian, Harper, Ava, Sophia, Julia, Mason, Jack, Oliver, Ethan, Auto
+
+text string
+Text content for TTS when audio_url is not provided
+
+FastImageToVideoRequest
+#
+prompt string
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video Default value: "16:9"
+
+Possible enum values: 16:9, 4:3, 1:1, 3:4, 9:16
+
+resolution ResolutionEnum
+The resolution of the generated video Default value: "720p"
+
+Possible enum values: 360p, 540p, 720p
+
+negative_prompt string
+Negative prompt to be used for the generation Default value: ""
+
+style StyleEnum
+The style of the generated video
+
+Possible enum values: anime, 3d_animation, clay, comic, cyberpunk
+
+seed integer
+The same seed and the same prompt given to the same version of the model will output the same video every time.
+
+image_url string
+URL of the image to use as the first frame
+
+FastExtendRequest
+#
+video_url string
+URL of the input video to extend
+
+prompt string
+Prompt describing how to extend the video
+
+negative_prompt string
+Negative prompt to be used for the generation Default value: ""
+
+style StyleEnum
+The style of the extended video
+
+Possible enum values: anime, 3d_animation, day, cyberpunk, comic
+
+resolution ResolutionEnum
+The resolution of the generated video. Fast mode doesn't support 1080p Default value: "720p"
+
+Possible enum values: 360p, 540p, 720p
+
+model ModelEnum
+The model version to use for generation Default value: "v4.5"
+
+Possible enum values: v3.5, v4, v4.5
+
+seed integer
+Random seed for generation
+
+
+model 4 fal-ai/pixverse/v4.5/text-to-video
+
+
+About
+Text To Video V4 5
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/pixverse/v4.5/text-to-video", {
+  input: {
+    prompt: "Epic low-cut camera capture of a girl clad in ultraviolet threads, Peter Max art style depiction, luminous diamond skin glistening under a vast moon's radiance, embodied in a superhuman flight among mystical ruins, symbolizing a deity's ritual ascent, hyper-detailed"
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/pixverse/v4.5/text-to-video", {
+  input: {
+    prompt: "Epic low-cut camera capture of a girl clad in ultraviolet threads, Peter Max art style depiction, luminous diamond skin glistening under a vast moon's radiance, embodied in a superhuman flight among mystical ruins, symbolizing a deity's ritual ascent, hyper-detailed"
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/pixverse/v4.5/text-to-video", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/pixverse/v4.5/text-to-video", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+prompt string
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video Default value: "16:9"
+
+Possible enum values: 16:9, 4:3, 1:1, 3:4, 9:16
+
+resolution ResolutionEnum
+The resolution of the generated video Default value: "720p"
+
+Possible enum values: 360p, 540p, 720p, 1080p
+
+duration DurationEnum
+The duration of the generated video in seconds. 8s videos cost double. 1080p videos are limited to 5 seconds Default value: "5"
+
+Possible enum values: 5, 8
+
+negative_prompt string
+Negative prompt to be used for the generation Default value: ""
+
+style StyleEnum
+The style of the generated video
+
+Possible enum values: anime, 3d_animation, clay, comic, cyberpunk
+
+seed integer
+The same seed and the same prompt given to the same version of the model will output the same video every time.
+
+
+{
+  "prompt": "Epic low-cut camera capture of a girl clad in ultraviolet threads, Peter Max art style depiction, luminous diamond skin glistening under a vast moon's radiance, embodied in a superhuman flight among mystical ruins, symbolizing a deity's ritual ascent, hyper-detailed",
+  "aspect_ratio": "16:9",
+  "resolution": "720p",
+  "duration": "5",
+  "negative_prompt": "blurry, low quality, low resolution, pixelated, noisy, grainy, out of focus, poorly lit, poorly exposed, poorly composed, poorly framed, poorly cropped, poorly color corrected, poorly color graded"
+}
+Output
+#
+video File
+The generated video
+
+
+{
+  "video": {
+    "file_size": 5485412,
+    "file_name": "output.mp4",
+    "content_type": "video/mp4",
+    "url": "https://fal.media/files/lion/_fVEU5nzHND_fHGQUhXEm_output.mp4"
+  }
+}
+Other types
+#
+ExtendRequest
+#
+video_url string
+URL of the input video to extend
+
+prompt string
+Prompt describing how to extend the video
+
+negative_prompt string
+Negative prompt to be used for the generation Default value: ""
+
+style StyleEnum
+The style of the extended video
+
+Possible enum values: anime, 3d_animation, day, cyberpunk, comic
+
+resolution ResolutionEnum
+The resolution of the generated video Default value: "720p"
+
+Possible enum values: 360p, 540p, 720p, 1080p
+
+duration DurationEnum
+The duration of the generated video in seconds. 1080p videos are limited to 5 seconds Default value: "5"
+
+Possible enum values: 5, 8
+
+model ModelEnum
+The model version to use for generation Default value: "v4.5"
+
+Possible enum values: v3.5, v4, v4.5
+
+seed integer
+Random seed for generation
+
+I2VOutputV4
+#
+video File
+The generated video
+
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data
+
+FastTextToVideoRequest
+#
+prompt string
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video Default value: "16:9"
+
+Possible enum values: 16:9, 4:3, 1:1, 3:4, 9:16
+
+resolution ResolutionEnum
+The resolution of the generated video Default value: "720p"
+
+Possible enum values: 360p, 540p, 720p
+
+negative_prompt string
+Negative prompt to be used for the generation Default value: ""
+
+style StyleEnum
+The style of the generated video
+
+Possible enum values: anime, 3d_animation, clay, comic, cyberpunk
+
+seed integer
+The same seed and the same prompt given to the same version of the model will output the same video every time.
+
+ImageToVideoRequest
+#
+prompt string
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video Default value: "16:9"
+
+Possible enum values: 16:9, 4:3, 1:1, 3:4, 9:16
+
+resolution ResolutionEnum
+The resolution of the generated video Default value: "720p"
+
+Possible enum values: 360p, 540p, 720p, 1080p
+
+duration DurationEnum
+The duration of the generated video in seconds. 8s videos cost double. 1080p videos are limited to 5 seconds Default value: "5"
+
+Possible enum values: 5, 8
+
+negative_prompt string
+Negative prompt to be used for the generation Default value: ""
+
+style StyleEnum
+The style of the generated video
+
+Possible enum values: anime, 3d_animation, clay, comic, cyberpunk
+
+seed integer
+The same seed and the same prompt given to the same version of the model will output the same video every time.
+
+image_url string
+URL of the image to use as the first frame
+
+TransitionRequest
+#
+prompt string
+The prompt for the transition
+
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video Default value: "16:9"
+
+Possible enum values: 16:9, 4:3, 1:1, 3:4, 9:16
+
+resolution ResolutionEnum
+The resolution of the generated video Default value: "720p"
+
+Possible enum values: 360p, 540p, 720p, 1080p
+
+duration DurationEnum
+The duration of the generated video in seconds Default value: "5"
+
+Possible enum values: 5, 8
+
+negative_prompt string
+Negative prompt to be used for the generation Default value: ""
+
+style StyleEnum
+The style of the generated video
+
+Possible enum values: anime, 3d_animation, clay, comic, cyberpunk
+
+seed integer
+The same seed and the same prompt given to the same version of the model will output the same video every time.
+
+first_image_url string
+URL of the image to use as the first frame
+
+last_image_url string
+URL of the image to use as the last frame
+
+FastImageToVideoRequestV4
+#
+prompt string
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video Default value: "16:9"
+
+Possible enum values: 16:9, 4:3, 1:1, 3:4, 9:16
+
+resolution ResolutionEnum
+The resolution of the generated video Default value: "720p"
+
+Possible enum values: 360p, 540p, 720p
+
+negative_prompt string
+Negative prompt to be used for the generation Default value: ""
+
+style StyleEnum
+The style of the generated video
+
+Possible enum values: anime, 3d_animation, clay, comic, cyberpunk
+
+seed integer
+The same seed and the same prompt given to the same version of the model will output the same video every time.
+
+image_url string
+URL of the image to use as the first frame
+
+ImageToVideoRequestV4
+#
+prompt string
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video Default value: "16:9"
+
+Possible enum values: 16:9, 4:3, 1:1, 3:4, 9:16
+
+resolution ResolutionEnum
+The resolution of the generated video Default value: "720p"
+
+Possible enum values: 360p, 540p, 720p, 1080p
+
+duration DurationEnum
+The duration of the generated video in seconds. 8s videos cost double. 1080p videos are limited to 5 seconds Default value: "5"
+
+Possible enum values: 5, 8
+
+negative_prompt string
+Negative prompt to be used for the generation Default value: ""
+
+style StyleEnum
+The style of the generated video
+
+Possible enum values: anime, 3d_animation, clay, comic, cyberpunk
+
+seed integer
+The same seed and the same prompt given to the same version of the model will output the same video every time.
+
+image_url string
+URL of the image to use as the first frame
+
+SoundEffectRequest
+#
+video_url string
+URL of the input video to add sound effects to
+
+original_sound_switch boolean
+Whether to keep the original audio from the video
+
+prompt string
+Description of the sound effect to generate. If empty, a random sound effect will be generated Default value: ""
+
+LipsyncRequest
+#
+video_url string
+URL of the input video
+
+audio_url string
+URL of the input audio. If not provided, TTS will be used.
+
+voice_id VoiceIdEnum
+Voice to use for TTS when audio_url is not provided Default value: "Auto"
+
+Possible enum values: Emily, James, Isabella, Liam, Chloe, Adrian, Harper, Ava, Sophia, Julia, Mason, Jack, Oliver, Ethan, Auto
+
+text string
+Text content for TTS when audio_url is not provided
+
+FastImageToVideoRequest
+#
+prompt string
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video Default value: "16:9"
+
+Possible enum values: 16:9, 4:3, 1:1, 3:4, 9:16
+
+resolution ResolutionEnum
+The resolution of the generated video Default value: "720p"
+
+Possible enum values: 360p, 540p, 720p
+
+negative_prompt string
+Negative prompt to be used for the generation Default value: ""
+
+style StyleEnum
+The style of the generated video
+
+Possible enum values: anime, 3d_animation, clay, comic, cyberpunk
+
+seed integer
+The same seed and the same prompt given to the same version of the model will output the same video every time.
+
+image_url string
+URL of the image to use as the first frame
+
+FastExtendRequest
+#
+video_url string
+URL of the input video to extend
+
+prompt string
+Prompt describing how to extend the video
+
+negative_prompt string
+Negative prompt to be used for the generation Default value: ""
+
+style StyleEnum
+The style of the extended video
+
+Possible enum values: anime, 3d_animation, day, cyberpunk, comic
+
+resolution ResolutionEnum
+The resolution of the generated video. Fast mode doesn't support 1080p Default value: "720p"
+
+Possible enum values: 360p, 540p, 720p
+
+model ModelEnum
+The model version to use for generation Default value: "v4.5"
+
+Possible enum values: v3.5, v4, v4.5
+
+seed integer
+Random seed for generation
+
+model 5 fal-ai/wan-pro/text-to-video
+
+About
+Generate a 6-second 1080p video (at 30 FPS) from text using an enhanced version of Wan 2.1.
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/wan-pro/text-to-video", {
+  input: {
+    prompt: "A lone astronaut in a detailed NASA spacesuit performs an exuberant dance on the lunar surface, arms outstretched in joyful abandon against the stark moonscape. The Earth hangs dramatically in the black sky, appearing to streak past due to the motion of the dance, creating a sense of dynamic movement. The scene captures extreme contrasts between the brilliant white of the spacesuit reflecting harsh sunlight and the deep shadows of the lunar craters. Every detail is rendered with photorealistic precision: the texture of the regolith disturbed by the astronaut's boots, the reflections on the helmet visor."
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/wan-pro/text-to-video", {
+  input: {
+    prompt: "A lone astronaut in a detailed NASA spacesuit performs an exuberant dance on the lunar surface, arms outstretched in joyful abandon against the stark moonscape. The Earth hangs dramatically in the black sky, appearing to streak past due to the motion of the dance, creating a sense of dynamic movement. The scene captures extreme contrasts between the brilliant white of the spacesuit reflecting harsh sunlight and the deep shadows of the lunar craters. Every detail is rendered with photorealistic precision: the texture of the regolith disturbed by the astronaut's boots, the reflections on the helmet visor."
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/wan-pro/text-to-video", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/wan-pro/text-to-video", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+prompt string
+The prompt to generate the video
+
+seed integer
+Random seed for reproducibility. If None, a random seed is chosen.
+
+enable_safety_checker boolean
+Whether to enable the safety checker Default value: true
+
+
+{
+  "prompt": "A lone astronaut in a detailed NASA spacesuit performs an exuberant dance on the lunar surface, arms outstretched in joyful abandon against the stark moonscape. The Earth hangs dramatically in the black sky, appearing to streak past due to the motion of the dance, creating a sense of dynamic movement. The scene captures extreme contrasts between the brilliant white of the spacesuit reflecting harsh sunlight and the deep shadows of the lunar craters. Every detail is rendered with photorealistic precision: the texture of the regolith disturbed by the astronaut's boots, the reflections on the helmet visor.",
+  "enable_safety_checker": true
+}
+Output
+#
+video File
+The generated video
+
+
+{
+  "video": {
+    "url": "https://fal.media/files/panda/YxRLson-aETxeBK1DI4VW.mp4"
+  }
+}
+Other types
+#
+WanProI2VResponse
+#
+video File
+The generated video
+
+WanProI2VRequest
+#
+prompt string
+The prompt to generate the video
+
+seed integer
+Random seed for reproducibility. If None, a random seed is chosen.
+
+enable_safety_checker boolean
+Whether to enable the safety checker Default value: true
+
+image_url string
+The URL of the image to generate the video from
+
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+model 6 - fal-ai/luma-dream-machine/ray-2-flash
+
+About
+Luma's state of the art Ray2 model for text-to-video generation.
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/luma-dream-machine/ray-2-flash", {
+  input: {
+    prompt: "A herd of wild horses galloping across a dusty desert plain under a blazing midday sun, their manes flying in the wind; filmed in a wide tracking shot with dynamic motion, warm natural lighting, and an epic."
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/luma-dream-machine/ray-2-flash", {
+  input: {
+    prompt: "A herd of wild horses galloping across a dusty desert plain under a blazing midday sun, their manes flying in the wind; filmed in a wide tracking shot with dynamic motion, warm natural lighting, and an epic."
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/luma-dream-machine/ray-2-flash", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/luma-dream-machine/ray-2-flash", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+prompt string
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video Default value: "16:9"
+
+Possible enum values: 16:9, 9:16, 4:3, 3:4, 21:9, 9:21
+
+loop boolean
+Whether the video should loop (end of video is blended with the beginning)
+
+resolution ResolutionEnum
+The resolution of the generated video (720p costs 2x more, 1080p costs 4x more) Default value: "540p"
+
+Possible enum values: 540p, 720p, 1080p
+
+duration DurationEnum
+The duration of the generated video (9s costs 2x more) Default value: "5s"
+
+Possible enum values: 5s, 9s
+
+
+{
+  "prompt": "A herd of wild horses galloping across a dusty desert plain under a blazing midday sun, their manes flying in the wind; filmed in a wide tracking shot with dynamic motion, warm natural lighting, and an epic.",
+  "aspect_ratio": "16:9",
+  "resolution": "540p",
+  "duration": "5s"
+}
+Output
+#
+video File
+The generated video
+
+
+{
+  "video": {
+    "url": "https://v3.fal.media/files/penguin/Om3xjcOwiSCJwrXs7DUi__output.mp4"
+  }
+}
+Other types
+#
+TextToVideoRequest
+#
+prompt string
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video Default value: "16:9"
+
+Possible enum values: 16:9, 9:16, 4:3, 3:4, 21:9, 9:21
+
+loop boolean
+Whether the video should loop (end of video is blended with the beginning)
+
+ReframeVideoRequest
+#
+video_url string
+URL of the input video to reframe
+
+aspect_ratio AspectRatioEnum
+The aspect ratio of the reframed video
+
+Possible enum values: 1:1, 16:9, 9:16, 4:3, 3:4, 21:9, 9:21
+
+image_url string
+Optional URL of the first frame image for reframing
+
+grid_position_x integer
+X position of the grid for reframing
+
+grid_position_y integer
+Y position of the grid for reframing
+
+prompt string
+Optional prompt for reframing
+
+x_end integer
+End X coordinate for reframing
+
+x_start integer
+Start X coordinate for reframing
+
+y_end integer
+End Y coordinate for reframing
+
+y_start integer
+Start Y coordinate for reframing
+
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data
+
+ImageToVideoRequest
+#
+prompt string
+image_url string
+end_image_url string
+An image to blend the end of the video with
+
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video Default value: "16:9"
+
+Possible enum values: 16:9, 9:16, 4:3, 3:4, 21:9, 9:21
+
+loop boolean
+Whether the video should loop (end of video is blended with the beginning)
+
+Ray2ImageToVideoRequest
+#
+prompt string
+image_url string
+Initial image to start the video from. Can be used together with end_image_url.
+
+end_image_url string
+Final image to end the video with. Can be used together with image_url.
+
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video Default value: "16:9"
+
+Possible enum values: 16:9, 9:16, 4:3, 3:4, 21:9, 9:21
+
+loop boolean
+Whether the video should loop (end of video is blended with the beginning)
+
+resolution ResolutionEnum
+The resolution of the generated video (720p costs 2x more, 1080p costs 4x more) Default value: "540p"
+
+Possible enum values: 540p, 720p, 1080p
+
+duration DurationEnum
+The duration of the generated video Default value: "5s"
+
+Possible enum values: 5s, 9s
+
+ModifyVideoRequest
+#
+video_url string
+URL of the input video to modify
+
+image_url string
+Optional URL of the first frame image for modification
+
+prompt string
+Instruction for modifying the video
+
+mode ModeEnum
+Amount of modification to apply to the video, adhere_1 is the least amount of modification, reimagine_3 is the most Default value: "flex_1"
+
+Possible enum values: adhere_1, adhere_2, adhere_3, flex_1, flex_2, flex_3, reimagine_1, reimagine_2, reimagine_3
+
+model 7- fal-ai/pika/v2.2/text-to-video
+
+About
+Pika 2.2 Text-to-Video Generation.
+
+Generates a video from text description using the Pika 2.2 model. This is Pika's highest quality model with support for resolution and duration options.
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/pika/v2.2/text-to-video", {
+  input: {
+    prompt: "Sunlight streams down on a woman with flowing auburn hair as she runs effortlessly along a tree-lined street, her joyous expression reflecting the freedom of the moment; the simple, steady camerawork emphasizes her grace and the beauty of the everyday."
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/pika/v2.2/text-to-video", {
+  input: {
+    prompt: "Sunlight streams down on a woman with flowing auburn hair as she runs effortlessly along a tree-lined street, her joyous expression reflecting the freedom of the moment; the simple, steady camerawork emphasizes her grace and the beauty of the everyday."
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/pika/v2.2/text-to-video", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/pika/v2.2/text-to-video", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+prompt string
+seed integer
+The seed for the random number generator
+
+negative_prompt string
+A negative prompt to guide the model Default value: ""
+
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video Default value: "16:9"
+
+Possible enum values: 16:9, 9:16, 1:1, 4:5, 5:4, 3:2, 2:3
+
+resolution ResolutionEnum
+The resolution of the generated video Default value: "720p"
+
+Possible enum values: 720p, 1080p
+
+duration integer
+The duration of the generated video in seconds Default value: 5
+
+
+{
+  "prompt": "Sunlight streams down on a woman with flowing auburn hair as she runs effortlessly along a tree-lined street, her joyous expression reflecting the freedom of the moment; the simple, steady camerawork emphasizes her grace and the beauty of the everyday.",
+  "aspect_ratio": "16:9",
+  "resolution": "720p",
+  "duration": 5
+}
+Output
+#
+video File
+The generated video
+
+
+{
+  "video": {
+    "url": "https://storage.googleapis.com/falserverless/web-examples/pika/pika%202.2/text-to-video-output.mp4"
+  }
+}
+Other types
+#
+TextToVideoRequest
+#
+prompt string
+seed integer
+The seed for the random number generator
+
+negative_prompt string
+A negative prompt to guide the model Default value: ""
+
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video Default value: "16:9"
+
+Possible enum values: 16:9, 9:16, 1:1, 4:5, 5:4, 3:2, 2:3
+
+resolution ResolutionEnum
+The resolution of the generated video Default value: "720p"
+
+Possible enum values: 720p, 1080p
+
+duration integer
+The duration of the generated video in seconds Default value: 5
+
+Pika22ImageToVideoRequest
+#
+image_url string
+URL of the image to use as the first frame
+
+prompt string
+seed integer
+The seed for the random number generator
+
+negative_prompt string
+A negative prompt to guide the model Default value: ""
+
+resolution ResolutionEnum
+The resolution of the generated video Default value: "720p"
+
+Possible enum values: 720p, 1080p
+
+duration integer
+The duration of the generated video in seconds Default value: 5
+
+PikaswapsRequest
+#
+video_url string
+URL of the input video
+
+image_url string
+URL of the image to swap with
+
+modify_region string
+Plaintext description of the object/region to modify
+
+prompt string
+Text prompt describing the modification
+
+negative_prompt string
+Negative prompt to guide the model
+
+seed integer
+The seed for the random number generator
+
+CollectionToVideoRequest
+#
+images list<PikaImage>
+List of images to use for video generation
+
+prompt string
+seed integer
+The seed for the random number generator
+
+negative_prompt string
+A negative prompt to guide the model Default value: ""
+
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video Default value: "16:9"
+
+Possible enum values: 16:9, 9:16, 1:1, 4:5, 5:4, 3:2, 2:3
+
+resolution ResolutionEnum
+The resolution of the generated video Default value: "720p"
+
+Possible enum values: 720p, 1080p
+
+duration integer
+The duration of the generated video in seconds Default value: 5
+
+ingredients_mode IngredientsModeEnum
+Mode for integrating multiple images Default value: "creative"
+
+Possible enum values: creative, precise
+
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data
+
+ImageToVideoRequest
+#
+image_url string
+URL of the image to use as the first frame
+
+prompt string
+seed integer
+The seed for the random number generator
+
+negative_prompt string
+A negative prompt to guide the model Default value: ""
+
+resolution ResolutionEnum
+The resolution of the generated video Default value: "720p"
+
+Possible enum values: 720p, 1080p
+
+duration integer
+The duration of the generated video in seconds Default value: 5
+
+PikadditionsRequest
+#
+video_url string
+URL of the input video
+
+image_url string
+URL of the image to add
+
+prompt string
+Text prompt describing what to add
+
+negative_prompt string
+Negative prompt to guide the model
+
+seed integer
+The seed for the random number generator
+
+PikaImage
+#
+image_url string
+PikaffectsRequest
+#
+image_url string
+URL of the input image
+
+pikaffect PikaffectEnum
+The Pikaffect to apply
+
+Possible enum values: Cake-ify, Crumble, Crush, Decapitate, Deflate, Dissolve, Explode, Eye-pop, Inflate, Levitate, Melt, Peel, Poke, Squish, Ta-da, Tear
+
+prompt string
+Text prompt to guide the effect
+
+negative_prompt string
+Negative prompt to guide the model
+
+seed integer
+The seed for the random number generator
+
+model 8 - fal-ai/minimax/hailuo-02/standard/text-to-video
+
+About
+MiniMax Hailuo-02 Text To Video API (Standard, 768p): Advanced video generation model with 768p resolution
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/minimax/hailuo-02/standard/text-to-video", {
+  input: {
+    prompt: "A Galactic Smuggler is a rogue figure with a cybernetic arm and a well-worn coat that hints at many dangerous escapades across the galaxy. Their ship is filled with rare and exotic treasures from distant planets, concealed in hidden compartments, showing their expertise in illicit trade. Their belt is adorned with energy-based weapons, ready to be drawn at any moment to protect themselves or escape from tight situations. This character thrives in the shadows of space, navigating between the law and chaos with stealth and wit, always seeking the next big score while evading bounty hunters and law enforcement. The rogue's ship, rugged yet efficient, serves as both a home and a tool for their dangerous lifestyle. The treasures they collect reflect the diverse and intriguing worlds they've encountered—alien artifacts, rare minerals, and artifacts of unknown origin. Their reputation precedes them, with whispers of their dealings and the deadly encounters that often follow. A master of negotiation and deception, the Galactic Smuggler navigates the cosmos with an eye on the horizon, always one step ahead of those who pursue them."
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/minimax/hailuo-02/standard/text-to-video", {
+  input: {
+    prompt: "A Galactic Smuggler is a rogue figure with a cybernetic arm and a well-worn coat that hints at many dangerous escapades across the galaxy. Their ship is filled with rare and exotic treasures from distant planets, concealed in hidden compartments, showing their expertise in illicit trade. Their belt is adorned with energy-based weapons, ready to be drawn at any moment to protect themselves or escape from tight situations. This character thrives in the shadows of space, navigating between the law and chaos with stealth and wit, always seeking the next big score while evading bounty hunters and law enforcement. The rogue's ship, rugged yet efficient, serves as both a home and a tool for their dangerous lifestyle. The treasures they collect reflect the diverse and intriguing worlds they've encountered—alien artifacts, rare minerals, and artifacts of unknown origin. Their reputation precedes them, with whispers of their dealings and the deadly encounters that often follow. A master of negotiation and deception, the Galactic Smuggler navigates the cosmos with an eye on the horizon, always one step ahead of those who pursue them."
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/minimax/hailuo-02/standard/text-to-video", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/minimax/hailuo-02/standard/text-to-video", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+prompt string
+duration DurationEnum
+The duration of the video in seconds. 10 seconds videos are not supported for 1080p resolution. Default value: "6"
+
+Possible enum values: 6, 10
+
+prompt_optimizer boolean
+Whether to use the model's prompt optimizer Default value: true
+
+
+{
+  "prompt": "A Galactic Smuggler is a rogue figure with a cybernetic arm and a well-worn coat that hints at many dangerous escapades across the galaxy. Their ship is filled with rare and exotic treasures from distant planets, concealed in hidden compartments, showing their expertise in illicit trade. Their belt is adorned with energy-based weapons, ready to be drawn at any moment to protect themselves or escape from tight situations. This character thrives in the shadows of space, navigating between the law and chaos with stealth and wit, always seeking the next big score while evading bounty hunters and law enforcement. The rogue's ship, rugged yet efficient, serves as both a home and a tool for their dangerous lifestyle. The treasures they collect reflect the diverse and intriguing worlds they've encountered—alien artifacts, rare minerals, and artifacts of unknown origin. Their reputation precedes them, with whispers of their dealings and the deadly encounters that often follow. A master of negotiation and deception, the Galactic Smuggler navigates the cosmos with an eye on the horizon, always one step ahead of those who pursue them.",
+  "duration": "6",
+  "prompt_optimizer": true
+}
+Output
+#
+video File
+The generated video
+
+
+{
+  "video": {
+    "url": "https://v3.fal.media/files/kangaroo/_qEOfY3iKHsc86kqHUUh2_output.mp4"
+  }
+}
+Other types
+#
+TextToSpeechTurboRequest
+#
+text string
+Text to convert to speech (max 5000 characters)
+
+voice_setting VoiceSetting
+Voice configuration settings
+
+audio_setting AudioSetting
+Audio configuration settings
+
+language_boost LanguageBoostEnum
+Enhance recognition of specified languages and dialects
+
+Possible enum values: Chinese, Chinese,Yue, English, Arabic, Russian, Spanish, French, Portuguese, German, Turkish, Dutch, Ukrainian, Vietnamese, Indonesian, Japanese, Italian, Korean, Thai, Polish, Romanian, Greek, Czech, Finnish, Hindi, auto
+
+output_format OutputFormatEnum
+Format of the output content (non-streaming only) Default value: "hex"
+
+Possible enum values: url, hex
+
+pronunciation_dict PronunciationDict
+Custom pronunciation dictionary for text replacement
+
+TextToVideoLiveRequest
+#
+prompt string
+prompt_optimizer boolean
+Whether to use the model's prompt optimizer Default value: true
+
+TextToVideoDirectorRequest
+#
+prompt string
+Text prompt for video generation. Camera movement instructions can be added using square brackets (e.g. [Pan left] or [Zoom in]). You can use up to 3 combined movements per prompt. Supported movements: Truck left/right, Pan left/right, Push in/Pull out, Pedestal up/down, Tilt up/down, Zoom in/out, Shake, Tracking shot, Static shot. For example: [Truck left, Pan right, Zoom in]. For a more detailed guide, refer https://sixth-switch-2ac.notion.site/T2V-01-Director-Model-Tutorial-with-camera-movement-1886c20a98eb80f395b8e05291ad8645
+
+prompt_optimizer boolean
+Whether to use the model's prompt optimizer Default value: true
+
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data
+
+ImageToVideoRequest
+#
+prompt string
+image_url string
+URL of the image to use as the first frame
+
+prompt_optimizer boolean
+Whether to use the model's prompt optimizer Default value: true
+
+SubjectReferenceRequest
+#
+prompt string
+subject_reference_image_url string
+URL of the subject reference image to use for consistent subject appearance
+
+prompt_optimizer boolean
+Whether to use the model's prompt optimizer Default value: true
+
+AudioSetting
+#
+sample_rate SampleRateEnum
+Sample rate of generated audio Default value: "32000"
+
+Possible enum values: 8000, 16000, 22050, 24000, 32000, 44100
+
+bitrate BitrateEnum
+Bitrate of generated audio Default value: "128000"
+
+Possible enum values: 32000, 64000, 128000, 256000
+
+format FormatEnum
+Audio format Default value: "mp3"
+
+Possible enum values: mp3, pcm, flac
+
+channel ChannelEnum
+Number of audio channels (1=mono, 2=stereo) Default value: "1"
+
+Possible enum values: 1, 2
+
+MiniMaxTextToImageWithReferenceRequest
+#
+prompt string
+Text prompt for image generation (max 1500 characters)
+
+image_url string
+URL of the subject reference image to use for consistent character appearance
+
+aspect_ratio AspectRatioEnum
+Aspect ratio of the generated image Default value: "1:1"
+
+Possible enum values: 1:1, 16:9, 4:3, 3:2, 2:3, 3:4, 9:16, 21:9
+
+num_images integer
+Number of images to generate (1-9) Default value: 1
+
+prompt_optimizer boolean
+Whether to enable automatic prompt optimization
+
+VoiceDesignRequest
+#
+prompt string
+Voice description prompt for generating a personalized voice
+
+preview_text string
+Text for audio preview. Limited to 500 characters. A fee of $30 per 1M characters will be charged for the generation of the preview audio.
+
+MiniMaxTextToImageRequest
+#
+prompt string
+Text prompt for image generation (max 1500 characters)
+
+aspect_ratio AspectRatioEnum
+Aspect ratio of the generated image Default value: "1:1"
+
+Possible enum values: 1:1, 16:9, 4:3, 3:2, 2:3, 3:4, 9:16, 21:9
+
+num_images integer
+Number of images to generate (1-9) Default value: 1
+
+prompt_optimizer boolean
+Whether to enable automatic prompt optimization
+
+VoiceSetting
+#
+voice_id string
+Predefined voice ID to use for synthesis Default value: "Wise_Woman"
+
+speed float
+Speech speed (0.5-2.0) Default value: 1
+
+vol float
+Volume (0-10) Default value: 1
+
+pitch integer
+Voice pitch (-12 to 12)
+
+emotion EmotionEnum
+Emotion of the generated speech
+
+Possible enum values: happy, sad, angry, fearful, disgusted, surprised, neutral
+
+english_normalization boolean
+Enables English text normalization to improve number reading performance, with a slight increase in latency
+
+VoiceCloneRequest
+#
+audio_url string
+URL of the input audio file for voice cloning. Should be at least 10 seconds long.
+
+noise_reduction boolean
+Enable noise reduction for the cloned voice
+
+need_volume_normalization boolean
+Enable volume normalization for the cloned voice
+
+accuracy float
+Text validation accuracy threshold (0-1)
+
+text string
+Text to generate a TTS preview with the cloned voice (optional) Default value: "Hello, this is a preview of your cloned voice! I hope you like it!"
+
+model ModelEnum
+TTS model to use for preview. Options: speech-02-hd, speech-02-turbo, speech-01-hd, speech-01-turbo Default value: "speech-02-hd"
+
+Possible enum values: speech-02-hd, speech-02-turbo, speech-01-hd, speech-01-turbo
+
+VoiceDeleteRequest
+#
+voice_id string
+The voice_id of the voice to be deleted
+
+TextToVideoRequest
+#
+prompt string
+prompt_optimizer boolean
+Whether to use the model's prompt optimizer Default value: true
+
+ImageToVideoDirectorRequest
+#
+prompt string
+Text prompt for video generation. Camera movement instructions can be added using square brackets (e.g. [Pan left] or [Zoom in]). You can use up to 3 combined movements per prompt. Supported movements: Truck left/right, Pan left/right, Push in/Pull out, Pedestal up/down, Tilt up/down, Zoom in/out, Shake, Tracking shot, Static shot. For example: [Truck left, Pan right, Zoom in]. For a more detailed guide, refer https://sixth-switch-2ac.notion.site/T2V-01-Director-Model-Tutorial-with-camera-movement-1886c20a98eb80f395b8e05291ad8645
+
+image_url string
+URL of the image to use as the first frame
+
+prompt_optimizer boolean
+Whether to use the model's prompt optimizer Default value: true
+
+TextToSpeechHDRequest
+#
+text string
+Text to convert to speech (max 5000 characters)
+
+voice_setting VoiceSetting
+Voice configuration settings
+
+audio_setting AudioSetting
+Audio configuration settings
+
+language_boost LanguageBoostEnum
+Enhance recognition of specified languages and dialects
+
+Possible enum values: Chinese, Chinese,Yue, English, Arabic, Russian, Spanish, French, Portuguese, German, Turkish, Dutch, Ukrainian, Vietnamese, Indonesian, Japanese, Italian, Korean, Thai, Polish, Romanian, Greek, Czech, Finnish, Hindi, auto
+
+output_format OutputFormatEnum
+Format of the output content (non-streaming only) Default value: "hex"
+
+Possible enum values: url, hex
+
+pronunciation_dict PronunciationDict
+Custom pronunciation dictionary for text replacement
+
+PronunciationDict
+#
+tone_list list<string>
+List of pronunciation replacements in format ['text/(pronunciation)', ...]. For Chinese, tones are 1-5. Example: ['燕少飞/(yan4)(shao3)(fei1)']
+
+model 9 fal-ai/veo3
+Generate videos using Google's Veo 3 Fast model.
+
+For best results, prompts should be descriptive and clear. Include:
+
+Subject: What you want in the video (object, person, animal, scenery)
+Context: The background/setting
+Action: What the subject is doing
+Style: Film style keywords (horror, noir, cartoon etc.)
+Camera motion (optional): aerial view, tracking shot etc.
+Composition (optional): wide shot, close-up etc.
+Ambiance (optional): Color and lighting details
+More details are available in our prompting guide.
+
+The model supports:
+
+720p resolution videos
+5-8 second duration at 24 FPS
+Both 16:9 (landscape) and 9:16 (portrait) aspect ratios
+Safety filters prevent generation of inappropriate content.
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/veo3", {
+  input: {
+    prompt: "A casual street interview on a busy New York City sidewalk in the afternoon. The interviewer holds a plain, unbranded microphone and asks: Have you seen Google's new Veo3 model It is a super good model. Person replies: Yeah I saw it, it's already available on fal. It's crazy good."
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/veo3", {
+  input: {
+    prompt: "A casual street interview on a busy New York City sidewalk in the afternoon. The interviewer holds a plain, unbranded microphone and asks: Have you seen Google's new Veo3 model It is a super good model. Person replies: Yeah I saw it, it's already available on fal. It's crazy good."
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/veo3", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/veo3", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+prompt string
+The text prompt describing the video you want to generate
+
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video. If it is not set to 16:9, the video will be outpainted. Default value: "16:9"
+
+Possible enum values: 16:9, 9:16, 1:1
+
+duration DurationEnum
+The duration of the generated video in seconds Default value: "8s"
+
+Possible enum values: 8s
+
+negative_prompt string
+A negative prompt to guide the video generation
+
+enhance_prompt boolean
+Whether to enhance the video generation Default value: true
+
+seed integer
+A seed to use for the video generation
+
+resolution ResolutionEnum
+The resolution of the generated video Default value: "720p"
+
+Possible enum values: 720p, 1080p
+
+generate_audio boolean
+Whether to generate audio for the video. If false, %33 less credits will be used. Default value: true
+
+
+{
+  "prompt": "A casual street interview on a busy New York City sidewalk in the afternoon. The interviewer holds a plain, unbranded microphone and asks: Have you seen Google's new Veo3 model It is a super good model. Person replies: Yeah I saw it, it's already available on fal. It's crazy good.",
+  "aspect_ratio": "16:9",
+  "duration": "8s",
+  "enhance_prompt": true,
+  "resolution": "720p",
+  "generate_audio": true
+}
+Output
+#
+video File
+The generated video
+
+
+{
+  "video": {
+    "url": "https://v3.fal.media/files/penguin/Q-2dpcjIoQOldJRL3grsc_output.mp4"
+  }
+}
+Other types
+#
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data
+
+model 10 - fal-ai/veo2
+
+About
+Generate videos using Google's Veo 2 text-to-video model.
+
+For best results, prompts should be descriptive and clear. Include:
+
+Subject: What you want in the video (object, person, animal, scenery)
+Context: The background/setting
+Action: What the subject is doing
+Style: Film style keywords (horror, noir, cartoon etc.)
+Camera motion (optional): aerial view, tracking shot etc.
+Composition (optional): wide shot, close-up etc.
+Ambiance (optional): Color and lighting details
+More details are available in our prompting guide.
+
+The model supports:
+
+720p resolution videos
+5-8 second duration at 24 FPS
+Both 16:9 (landscape) and 9:16 (portrait) aspect ratios
+Safety filters prevent generation of inappropriate content.
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/veo2", {
+  input: {
+    prompt: "The camera floats gently through rows of pastel-painted wooden beehives, buzzing honeybees gliding in and out of frame. The motion settles on the refined farmer standing at the center, his pristine white beekeeping suit gleaming in the golden afternoon light. He lifts a jar of honey, tilting it slightly to catch the light. Behind him, tall sunflowers sway rhythmically in the breeze, their petals glowing in the warm sunlight. The camera tilts upward to reveal a retro farmhouse with mint-green shutters, its walls dappled with shadows from swaying trees. Shot with a 35mm lens on Kodak Portra 400 film, the golden light creates rich textures on the farmer's gloves, marmalade jar, and weathered wood of the beehives."
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/veo2", {
+  input: {
+    prompt: "The camera floats gently through rows of pastel-painted wooden beehives, buzzing honeybees gliding in and out of frame. The motion settles on the refined farmer standing at the center, his pristine white beekeeping suit gleaming in the golden afternoon light. He lifts a jar of honey, tilting it slightly to catch the light. Behind him, tall sunflowers sway rhythmically in the breeze, their petals glowing in the warm sunlight. The camera tilts upward to reveal a retro farmhouse with mint-green shutters, its walls dappled with shadows from swaying trees. Shot with a 35mm lens on Kodak Portra 400 film, the golden light creates rich textures on the farmer's gloves, marmalade jar, and weathered wood of the beehives."
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/veo2", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/veo2", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+prompt string
+The text prompt describing the video you want to generate
+
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video Default value: "16:9"
+
+Possible enum values: 16:9, 9:16
+
+duration DurationEnum
+The duration of the generated video in seconds Default value: "5s"
+
+Possible enum values: 5s, 6s, 7s, 8s
+
+negative_prompt string
+A negative prompt to guide the video generation
+
+enhance_prompt boolean
+Whether to enhance the video generation Default value: true
+
+seed integer
+A seed to use for the video generation
+
+
+{
+  "prompt": "The camera floats gently through rows of pastel-painted wooden beehives, buzzing honeybees gliding in and out of frame. The motion settles on the refined farmer standing at the center, his pristine white beekeeping suit gleaming in the golden afternoon light. He lifts a jar of honey, tilting it slightly to catch the light. Behind him, tall sunflowers sway rhythmically in the breeze, their petals glowing in the warm sunlight. The camera tilts upward to reveal a retro farmhouse with mint-green shutters, its walls dappled with shadows from swaying trees. Shot with a 35mm lens on Kodak Portra 400 film, the golden light creates rich textures on the farmer's gloves, marmalade jar, and weathered wood of the beehives.",
+  "aspect_ratio": "16:9",
+  "duration": "5s",
+  "enhance_prompt": true
+}
+Output
+#
+video File
+The generated video
+
+
+{
+  "video": {
+    "url": "https://v3.fal.media/files/tiger/83-YzufmOlsnhqq5ed382_output.mp4"
+  }
+}
+Other types
+#
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data
+

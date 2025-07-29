@@ -1,0 +1,128 @@
+project:
+  name: Slack AI Asset Generator
+  description: |
+    A Slack-integrated AI dashboard bot for teams at Paradowski Creative to generate marketing and creative assets using fal.ai’s multimodal models.
+    Users interact with the bot in channels or DMs, providing campaign context, selecting asset types (video, image, audio, etc.), choosing from available fal.ai models,
+    and customizing prompts and advanced settings. The bot uses Gemini 2.5 to enhance prompt context and stores outputs in session-specific Google Drive folders.
+    Sessions are user-isolated and context-aware via a Model Context Protocol (MCP), driven by cursor.rules.
+
+  owner: kush.sharma
+  stack:
+    frontend:
+      - interface: Slack
+      - SDK: Slack Bolt (Node.js)
+      - components:
+          - Slash commands + message triggers
+          - Modals, dropdowns, buttons
+          - Message threads (session-scoped)
+    backend:
+      - framework: Express.js
+      - language: JavaScript (ES6+)
+      - modules:
+          - MCP session/context manager
+          - Gemini 2.5 prompt enhancer (Vertex AI)
+          - Fal.ai model services (split by operation)
+          - Google Drive asset uploader
+          - cursor.rules flow manager
+      - services:
+          - imageTo3DService.js
+          - imageToImageService.js
+          - imageToVideoService.js
+          - textToImageService.js
+          - textToAudioService.js
+          - textToSpeechService.js
+          - textToVideoService.js
+          - videoToVideoService.js
+    infrastructure:
+      - storage: Redis or Firestore (for session context)
+      - drive: Google Drive API (OAuth service account)
+      - polling: in-process async polling queue
+      - scheduler: optional BullMQ (Node.js) for background jobs
+      - hosting: local dev or internal deployment
+    ai:
+      - generation: Fal.ai APIs (per model/operation)
+      - enhancement pipeline:
+          - Store raw user idea
+          - Embed LLM enhancement in final prompt
+    session:
+      - scoped by Slack thread or user DM
+      - stored context:
+          - campaign goal
+          - audience
+          - tone/style
+          - operation selected
+          - model + parameters
+          - final payload + output link
+
+workflow:
+  steps:
+    - User triggers bot via Slack message or slash command
+    - Bot asks for campaign idea and stores session
+    - User selects asset type (e.g., video-to-video)
+    - Bot lists compatible fal.ai models with descriptions
+    - User selects model + customizes advanced settings
+    - MCP combines all into generation prompt
+    - Job submitted to fal.ai API
+    - MCP polls job status until completion
+    - Asset uploaded to session-specific Google Drive folder
+    - Slack thread updated with final output + regen/edit options
+
+rules:
+  code-style:
+    javascript:
+      - use `async/await` for all service calls
+      - separate services per fal.ai operation
+      - organize MCP context logic into pure functions
+      - prefer `.json` or `.yaml` configs for models/rules
+      - avoid storing raw API keys in source files
+  api:
+    - `/start-session`: stores campaign input, triggers Gemini
+    - `/select-operation`: updates MCP with asset type
+    - `/list-models`: responds with fal.ai models for chosen operation
+    - `/submit-generation`: packages input + settings and calls fal.ai
+    - `/poll-status`: checks job state until done
+    - `/store-result`: saves asset to Drive, updates Slack
+    - `/regen`, `/edit`, `/upscale`: optional post-gen actions
+  security:
+    - store user IDs & session IDs securely
+    - validate all user input before prompt construction
+    - escape unsafe Slack output (e.g., links, markdown)
+    - use Google service account with limited folder scope
+    - log input/output to MCP with timestamps
+    - enforce per-user context isolation (no shared sessions)
+  hardening:
+    - input sanitization before prompt fusion
+    - restrict model settings via whitelist
+    - handle fal.ai timeout/failures gracefully
+    - time-limit Slack sessions (e.g., expire after 2h idle)
+    - log and audit Gemini + fal.ai API usage
+    - failover handling if Gemini/Fal.ai API fails
+    - warn if user tries to bypass flow with invalid input
+  storage:
+    - Google Drive (per-session folder)
+    - Redis or Firestore for MCP context per user
+    - JSON schema validation for stored prompts, outputs
+  scaling:
+    - multi-user Slack concurrency supported via thread ID
+    - stateless Express server + in-memory cache or Redis
+    - retry queue for polling and asset upload
+  logging:
+    - log full MCP object per step (with timestamp)
+    - log model usage per operation/model
+    - track Slack user activity and command errors
+    - optionally persist Gemini-enhanced prompts for QA
+  roadmap:
+    - [x] Slack bot scaffolded with Bolt
+    - [x] Campaign context captured and Gemini-enhanced
+    - [x] Operation and model selector implemented
+    - [x] Fal.ai job submission + polling
+    - [x] Drive upload and Slack notification complete
+    - [ ] Web dashboard for viewing all sessions
+    - [ ] Session regen + versioning
+    - [ ] Prompt tuning presets per campaign type
+    - [ ] Slack message summarizer (Gemini)
+  notes:
+    - User session = thread or DM context
+    - All prompt enhancement is Gemini-optional (fallback = direct)
+    - Model capabilities should be listed via JSON registry
+    - Future: enable multi-step edits or chaining (e.g., img2vid → vid2vid)

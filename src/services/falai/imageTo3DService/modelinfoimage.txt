@@ -1,0 +1,2189 @@
+model 1 -- tripo3d/tripo/v2.5/image-to-3d
+
+About
+Image To 3D
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("tripo3d/tripo/v2.5/image-to-3d", {
+  input: {
+    image_url: "https://platform.tripo3d.ai/assets/front-235queJB.jpg"
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("tripo3d/tripo/v2.5/image-to-3d", {
+  input: {
+    image_url: "https://platform.tripo3d.ai/assets/front-235queJB.jpg"
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("tripo3d/tripo/v2.5/image-to-3d", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("tripo3d/tripo/v2.5/image-to-3d", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+seed integer
+This is the random seed for model generation. The seed controls the geometry generation process, ensuring identical models when the same seed is used. This parameter is an integer and is randomly chosen if not set.
+
+face_limit integer
+Limits the number of faces on the output model. If this option is not set, the face limit will be adaptively determined.
+
+pbr boolean
+A boolean option to enable pbr. The default value is True, set False to get a model without pbr. If this option is set to True, texture will be ignored and used as True.
+
+texture TextureEnum
+An option to enable texturing. Default is 'standard', set 'no' to get a model without any textures, and set 'HD' to get a model with hd quality textures. Default value: "standard"
+
+Possible enum values: no, standard, HD
+
+texture_seed integer
+This is the random seed for texture generation. Using the same seed will produce identical textures. This parameter is an integer and is randomly chosen if not set. If you want a model with different textures, please use same seed and different texture_seed.
+
+auto_size boolean
+Automatically scale the model to real-world dimensions, with the unit in meters. The default value is False.
+
+style Enum
+Defines the artistic style or transformation to be applied to the 3D model, altering its appearance according to preset options (extra $0.05 per generation). Omit this option to keep the original style and apperance.
+
+Possible enum values: person:person2cartoon, object:clay, object:steampunk, animal:venom, object:barbie, object:christmas, gold, ancient_bronze
+
+quad boolean
+Set True to enable quad mesh output (extra $0.05 per generation). If quad=True and face_limit is not set, the default face_limit will be 10000. Note: Enabling this option will force the output to be an FBX model.
+
+texture_alignment Enum
+Determines the prioritization of texture alignment in the 3D model. The default value is original_image. Default value: original_image
+
+Possible enum values: original_image, geometry
+
+orientation Enum
+Set orientation=align_image to automatically rotate the model to align the original image. The default value is default. Default value: default
+
+Possible enum values: default, align_image
+
+image_url string
+URL of the image to use for model generation.
+
+
+{
+  "texture": "standard",
+  "texture_alignment": "original_image",
+  "orientation": "default",
+  "image_url": "https://platform.tripo3d.ai/assets/front-235queJB.jpg"
+}
+Output
+#
+task_id string
+The task id of the 3D model generation.
+
+model_mesh File
+Model
+
+base_model File
+Base model
+
+pbr_model File
+Pbr model
+
+rendered_image File
+A preview image of the model
+
+
+{
+  "task_id": "",
+  "model_mesh": {
+    "file_size": 6744644,
+    "content_type": "application/octet-stream",
+    "url": "https://v3.fal.media/files/zebra/NA4WkhbpI-XdOIFc4cDIk_tripo_model_812c3a8a-6eb3-4c09-9f40-0563d27ae7ea.glb"
+  },
+  "rendered_image": {
+    "file_size": 13718,
+    "content_type": "image/webp",
+    "url": "https://v3.fal.media/files/panda/zDTAHqp8ifMOT3upZ1xJv_legacy.webp"
+  }
+}
+Other types
+#
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+model 2 -- fal-ai/hunyuan3d-v21
+
+About
+Process 3D Model
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/hunyuan3d-v21", {
+  input: {
+    input_image_url: "https://storage.googleapis.com/falserverless/model_tests/video_models/robot.png"
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/hunyuan3d-v21", {
+  input: {
+    input_image_url: "https://storage.googleapis.com/falserverless/model_tests/video_models/robot.png"
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/hunyuan3d-v21", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/hunyuan3d-v21", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+input_image_url string
+URL of image to use while generating the 3D model.
+
+seed integer
+The same seed and the same prompt given to the same version of the model will output the same image every time.
+
+num_inference_steps integer
+Number of inference steps to perform. Default value: 50
+
+guidance_scale float
+Guidance scale for the model. Default value: 7.5
+
+octree_resolution integer
+Octree resolution for the model. Default value: 256
+
+textured_mesh boolean
+If set true, textured mesh will be generated and the price charged would be 3 times that of white mesh.
+
+
+{
+  "input_image_url": "https://storage.googleapis.com/falserverless/model_tests/video_models/robot.png",
+  "num_inference_steps": 50,
+  "guidance_scale": 7.5,
+  "octree_resolution": 256
+}
+Output
+#
+model_glb File
+Generated 3D object.
+
+model_glb_pbr File
+Generated 3D object with PBR materials.
+
+model_mesh File
+Generated 3D object assets zip.
+
+seed integer
+Seed value used for generation.
+
+
+{
+  "model_glb": {
+    "file_size": 1348528,
+    "file_name": "textured_mesh.glb",
+    "content_type": "application/octet-stream",
+    "url": "https://v3.fal.media/files/rabbit/WpMHqYy5chA5lsTNoilj__hun3d_v21.glb"
+  },
+  "model_mesh": {
+    "url": "",
+    "content_type": "image/png",
+    "file_name": "z9RV14K95DvU.png",
+    "file_size": 4404019
+  }
+}
+Other types
+#
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data
+
+model 3 -- fal-ai/hyper3d/rodin
+
+About
+Process 3D Model
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/hyper3d/rodin", {
+  input: {},
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/hyper3d/rodin", {
+  input: {},
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/hyper3d/rodin", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/hyper3d/rodin", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+prompt string
+A textual prompt to guide model generation. Required for Text-to-3D mode. Optional for Image-to-3D mode. Default value: ""
+
+input_image_urls list<string>
+URL of images to use while generating the 3D model. Required for Image-to-3D mode. Optional for Text-to-3D mode.
+
+condition_mode ConditionModeEnum
+For fuse mode, One or more images are required.It will generate a model by extracting and fusing features of objects from multiple images.For concat mode, need to upload multiple multi-view images of the same object and generate the model.(You can upload multi-view images in any order, regardless of the order of view.) Default value: "concat"
+
+Possible enum values: fuse, concat
+
+seed integer
+Seed value for randomization, ranging from 0 to 65535. Optional.
+
+geometry_file_format GeometryFileFormatEnum
+Format of the geometry file. Possible values: glb, usdz, fbx, obj, stl. Default is glb. Default value: "glb"
+
+Possible enum values: glb, usdz, fbx, obj, stl
+
+material MaterialEnum
+Material type. Possible values: PBR, Shaded. Default is PBR. Default value: "PBR"
+
+Possible enum values: PBR, Shaded
+
+quality QualityEnum
+Generation quality. Possible values: high, medium, low, extra-low. Default is medium. Default value: "medium"
+
+Possible enum values: high, medium, low, extra-low
+
+use_hyper boolean
+Whether to export the model using hyper mode. Default is false.
+
+tier TierEnum
+Tier of generation. For Rodin Sketch, set to Sketch. For Rodin Regular, set to Regular. Default value: "Regular"
+
+Possible enum values: Regular, Sketch
+
+TAPose boolean
+When generating the human-like model, this parameter control the generation result to T/A Pose.
+
+bbox_condition list<integer>
+An array that specifies the dimensions and scaling factor of the bounding box. Typically, this array contains 3 elements, Length(X-axis), Width(Y-axis) and Height(Z-axis).
+
+addons AddonsEnum
+Generation add-on features. Default is []. Possible values are HighPack. The HighPack option will provide 4K resolution textures instead of the default 1K, as well as models with high-poly. It will cost triple the billable units.
+
+Possible enum values: HighPack
+
+
+{
+  "prompt": "A futuristic robot with sleek metallic design.",
+  "input_image_urls": "https://storage.googleapis.com/falserverless/model_tests/video_models/robot.png",
+  "condition_mode": "concat",
+  "geometry_file_format": "glb",
+  "material": "Shaded",
+  "quality": "medium",
+  "tier": "Regular"
+}
+Output
+#
+model_mesh File
+Generated 3D object file.
+
+seed integer
+Seed value used for generation.
+
+textures list<Image>
+Generated textures for the 3D object.
+
+
+{
+  "model_mesh": {
+    "url": "https://v3.fal.media/files/koala/VlX4JqNI8F9HO2ETp_B7t_base_basic_pbr.glb"
+  },
+  "textures": [
+    {
+      "url": "",
+      "content_type": "image/png",
+      "file_name": "z9RV14K95DvU.png",
+      "file_size": 4404019,
+      "width": 1024,
+      "height": 1024
+    }
+  ]
+}
+Other types
+#
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data
+
+Image
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data
+
+width integer
+The width of the image in pixels.
+
+height integer
+The height of the image in pixels.
+
+model 4 --  fal-ai/trellis
+
+About
+Generate
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/trellis", {
+  input: {
+    image_url: "https://storage.googleapis.com/falserverless/web-examples/rodin3d/warriorwoman.png"
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/trellis", {
+  input: {
+    image_url: "https://storage.googleapis.com/falserverless/web-examples/rodin3d/warriorwoman.png"
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/trellis", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/trellis", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+image_url string
+URL of the input image to convert to 3D
+
+seed integer
+Random seed for reproducibility
+
+ss_guidance_strength float
+Guidance strength for sparse structure generation Default value: 7.5
+
+ss_sampling_steps integer
+Sampling steps for sparse structure generation Default value: 12
+
+slat_guidance_strength float
+Guidance strength for structured latent generation Default value: 3
+
+slat_sampling_steps integer
+Sampling steps for structured latent generation Default value: 12
+
+mesh_simplify float
+Mesh simplification factor Default value: 0.95
+
+texture_size TextureSizeEnum
+Texture resolution Default value: "1024"
+
+Possible enum values: 512, 1024, 2048
+
+
+{
+  "image_url": "https://storage.googleapis.com/falserverless/web-examples/rodin3d/warriorwoman.png",
+  "ss_guidance_strength": 7.5,
+  "ss_sampling_steps": 12,
+  "slat_guidance_strength": 3,
+  "slat_sampling_steps": 12,
+  "mesh_simplify": 0.95,
+  "texture_size": 1024
+}
+Output
+#
+model_mesh File
+Generated 3D mesh file
+
+timings Timings
+Processing timings
+
+
+{
+  "model_mesh": {
+    "url": "",
+    "content_type": "image/png",
+    "file_name": "z9RV14K95DvU.png",
+    "file_size": 4404019
+  }
+}
+Other types
+#
+MultiImageInputModel
+#
+image_urls list<string>
+List of URLs of input images to convert to 3D
+
+seed integer
+Random seed for reproducibility
+
+ss_guidance_strength float
+Guidance strength for sparse structure generation Default value: 7.5
+
+ss_sampling_steps integer
+Sampling steps for sparse structure generation Default value: 12
+
+slat_guidance_strength float
+Guidance strength for structured latent generation Default value: 3
+
+slat_sampling_steps integer
+Sampling steps for structured latent generation Default value: 12
+
+mesh_simplify float
+Mesh simplification factor Default value: 0.95
+
+texture_size TextureSizeEnum
+Texture resolution Default value: "1024"
+
+Possible enum values: 512, 1024, 2048
+
+multiimage_algo MultiimageAlgoEnum
+Algorithm for multi-image generation Default value: "stochastic"
+
+Possible enum values: stochastic, multidiffusion
+
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+model 5 -- tripo3d/tripo/v2.5/multiview-to-3d
+
+About
+Multiview To 3D
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("tripo3d/tripo/v2.5/multiview-to-3d", {
+  input: {
+    front_image_url: "https://platform.tripo3d.ai/assets/front-235queJB.jpg"
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("tripo3d/tripo/v2.5/multiview-to-3d", {
+  input: {
+    front_image_url: "https://platform.tripo3d.ai/assets/front-235queJB.jpg"
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("tripo3d/tripo/v2.5/multiview-to-3d", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("tripo3d/tripo/v2.5/multiview-to-3d", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+seed integer
+This is the random seed for model generation. The seed controls the geometry generation process, ensuring identical models when the same seed is used. This parameter is an integer and is randomly chosen if not set.
+
+face_limit integer
+Limits the number of faces on the output model. If this option is not set, the face limit will be adaptively determined.
+
+pbr boolean
+A boolean option to enable pbr. The default value is True, set False to get a model without pbr. If this option is set to True, texture will be ignored and used as True.
+
+texture TextureEnum
+An option to enable texturing. Default is 'standard', set 'no' to get a model without any textures, and set 'HD' to get a model with hd quality textures. Default value: "standard"
+
+Possible enum values: no, standard, HD
+
+texture_seed integer
+This is the random seed for texture generation. Using the same seed will produce identical textures. This parameter is an integer and is randomly chosen if not set. If you want a model with different textures, please use same seed and different texture_seed.
+
+auto_size boolean
+Automatically scale the model to real-world dimensions, with the unit in meters. The default value is False.
+
+style Enum
+Defines the artistic style or transformation to be applied to the 3D model, altering its appearance according to preset options (extra $0.05 per generation). Omit this option to keep the original style and apperance.
+
+Possible enum values: person:person2cartoon, object:clay, object:steampunk, animal:venom, object:barbie, object:christmas, gold, ancient_bronze
+
+quad boolean
+Set True to enable quad mesh output (extra $0.05 per generation). If quad=True and face_limit is not set, the default face_limit will be 10000. Note: Enabling this option will force the output to be an FBX model.
+
+texture_alignment Enum
+Determines the prioritization of texture alignment in the 3D model. The default value is original_image. Default value: original_image
+
+Possible enum values: original_image, geometry
+
+orientation Enum
+Set orientation=align_image to automatically rotate the model to align the original image. The default value is default. Default value: default
+
+Possible enum values: default, align_image
+
+front_image_url string
+Front view image of the object.
+
+left_image_url string
+Left view image of the object.
+
+back_image_url string
+Back view image of the object.
+
+right_image_url string
+Right view image of the object.
+
+
+{
+  "texture": "standard",
+  "texture_alignment": "original_image",
+  "orientation": "default",
+  "front_image_url": "https://platform.tripo3d.ai/assets/front-235queJB.jpg",
+  "left_image_url": "https://platform.tripo3d.ai/assets/left-Nfdj2U8P.jpg",
+  "back_image_url": "https://platform.tripo3d.ai/assets/back-6vq1a8L4.jpg",
+  "right_image_url": "https://platform.tripo3d.ai/assets/right-hj57H4if.jpg"
+}
+Output
+#
+task_id string
+The task id of the 3D model generation.
+
+model_mesh File
+Model
+
+base_model File
+Base model
+
+pbr_model File
+Pbr model
+
+rendered_image File
+A preview image of the model
+
+
+{
+  "task_id": "",
+  "model_mesh": {
+    "file_size": 6744644,
+    "content_type": "application/octet-stream",
+    "url": "https://v3.fal.media/files/zebra/NA4WkhbpI-XdOIFc4cDIk_tripo_model_812c3a8a-6eb3-4c09-9f40-0563d27ae7ea.glb"
+  },
+  "rendered_image": {
+    "file_size": 13718,
+    "content_type": "image/webp",
+    "url": "https://v3.fal.media/files/panda/zDTAHqp8ifMOT3upZ1xJv_legacy.webp"
+  }
+}
+Other types
+#
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+model 6 -- fal-ai/hunyuan3d/v2/multi-view
+
+About
+Process 3D Model Mv
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/hunyuan3d/v2/multi-view", {
+  input: {
+    front_image_url: "https://storage.googleapis.com/falserverless/model_tests/video_models/front.png",
+    back_image_url: "https://storage.googleapis.com/falserverless/model_tests/video_models/back.png",
+    left_image_url: "https://storage.googleapis.com/falserverless/model_tests/video_models/left.png"
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/hunyuan3d/v2/multi-view", {
+  input: {
+    front_image_url: "https://storage.googleapis.com/falserverless/model_tests/video_models/front.png",
+    back_image_url: "https://storage.googleapis.com/falserverless/model_tests/video_models/back.png",
+    left_image_url: "https://storage.googleapis.com/falserverless/model_tests/video_models/left.png"
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/hunyuan3d/v2/multi-view", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/hunyuan3d/v2/multi-view", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+front_image_url string
+URL of image to use while generating the 3D model.
+
+back_image_url string
+URL of image to use while generating the 3D model.
+
+left_image_url string
+URL of image to use while generating the 3D model.
+
+seed integer
+The same seed and the same prompt given to the same version of the model will output the same image every time.
+
+num_inference_steps integer
+Number of inference steps to perform. Default value: 50
+
+guidance_scale float
+Guidance scale for the model. Default value: 7.5
+
+octree_resolution integer
+Octree resolution for the model. Default value: 256
+
+textured_mesh boolean
+If set true, textured mesh will be generated and the price charged would be 3 times that of white mesh.
+
+
+{
+  "front_image_url": "https://storage.googleapis.com/falserverless/model_tests/video_models/front.png",
+  "back_image_url": "https://storage.googleapis.com/falserverless/model_tests/video_models/back.png",
+  "left_image_url": "https://storage.googleapis.com/falserverless/model_tests/video_models/left.png",
+  "num_inference_steps": 50,
+  "guidance_scale": 7.5,
+  "octree_resolution": 256
+}
+Output
+#
+model_mesh File
+Generated 3D object file.
+
+seed integer
+Seed value used for generation.
+
+
+{
+  "model_mesh": {
+    "file_size": 720696,
+    "file_name": "white_mesh.glb",
+    "content_type": "application/octet-stream",
+    "url": "https://storage.googleapis.com/falserverless/model_tests/video_models/mesh.glb"
+  }
+}
+Other types
+#
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data
+
+model 7 -- fal-ai/trellis/multi
+
+About
+Generate Multi
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/trellis/multi", {
+  input: {
+    image_urls: ["https://storage.googleapis.com/falserverless/model_tests/video_models/front.png", "https://storage.googleapis.com/falserverless/model_tests/video_models/back.png", "https://storage.googleapis.com/falserverless/model_tests/video_models/left.png"]
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/trellis/multi", {
+  input: {
+    image_urls: ["https://storage.googleapis.com/falserverless/model_tests/video_models/front.png", "https://storage.googleapis.com/falserverless/model_tests/video_models/back.png", "https://storage.googleapis.com/falserverless/model_tests/video_models/left.png"]
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/trellis/multi", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/trellis/multi", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+image_urls list<string>
+List of URLs of input images to convert to 3D
+
+seed integer
+Random seed for reproducibility
+
+ss_guidance_strength float
+Guidance strength for sparse structure generation Default value: 7.5
+
+ss_sampling_steps integer
+Sampling steps for sparse structure generation Default value: 12
+
+slat_guidance_strength float
+Guidance strength for structured latent generation Default value: 3
+
+slat_sampling_steps integer
+Sampling steps for structured latent generation Default value: 12
+
+mesh_simplify float
+Mesh simplification factor Default value: 0.95
+
+texture_size TextureSizeEnum
+Texture resolution Default value: "1024"
+
+Possible enum values: 512, 1024, 2048
+
+multiimage_algo MultiimageAlgoEnum
+Algorithm for multi-image generation Default value: "stochastic"
+
+Possible enum values: stochastic, multidiffusion
+
+
+{
+  "image_urls": [
+    "https://storage.googleapis.com/falserverless/model_tests/video_models/front.png",
+    "https://storage.googleapis.com/falserverless/model_tests/video_models/back.png",
+    "https://storage.googleapis.com/falserverless/model_tests/video_models/left.png"
+  ],
+  "ss_guidance_strength": 7.5,
+  "ss_sampling_steps": 12,
+  "slat_guidance_strength": 3,
+  "slat_sampling_steps": 12,
+  "mesh_simplify": 0.95,
+  "texture_size": 1024,
+  "multiimage_algo": "stochastic"
+}
+Output
+#
+model_mesh File
+Generated 3D mesh file
+
+timings Timings
+Processing timings
+
+
+{
+  "model_mesh": {
+    "url": "",
+    "content_type": "image/png",
+    "file_name": "z9RV14K95DvU.png",
+    "file_size": 4404019
+  }
+}
+Other types
+#
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+model 8 -- fal-ai/hunyuan3d/v2
+
+About
+Process 3D Model
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/hunyuan3d/v2", {
+  input: {
+    input_image_url: "https://storage.googleapis.com/falserverless/model_tests/video_models/robot.png"
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/hunyuan3d/v2", {
+  input: {
+    input_image_url: "https://storage.googleapis.com/falserverless/model_tests/video_models/robot.png"
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/hunyuan3d/v2", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/hunyuan3d/v2", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+input_image_url string
+URL of image to use while generating the 3D model.
+
+seed integer
+The same seed and the same prompt given to the same version of the model will output the same image every time.
+
+num_inference_steps integer
+Number of inference steps to perform. Default value: 50
+
+guidance_scale float
+Guidance scale for the model. Default value: 7.5
+
+octree_resolution integer
+Octree resolution for the model. Default value: 256
+
+textured_mesh boolean
+If set true, textured mesh will be generated and the price charged would be 3 times that of white mesh.
+
+
+{
+  "input_image_url": "https://storage.googleapis.com/falserverless/model_tests/video_models/robot.png",
+  "num_inference_steps": 50,
+  "guidance_scale": 7.5,
+  "octree_resolution": 256
+}
+Output
+#
+model_mesh File
+Generated 3D object file.
+
+seed integer
+Seed value used for generation.
+
+
+{
+  "model_mesh": {
+    "file_size": 720696,
+    "file_name": "white_mesh.glb",
+    "content_type": "application/octet-stream",
+    "url": "https://v3.fal.media/files/lion/WqIhtKPaSoeBtC30qzIGG_white_mesh.glb"
+  }
+}
+Other types
+#
+Hunyuan3DInputMultiView
+#
+front_image_url string
+URL of image to use while generating the 3D model.
+
+back_image_url string
+URL of image to use while generating the 3D model.
+
+left_image_url string
+URL of image to use while generating the 3D model.
+
+seed integer
+The same seed and the same prompt given to the same version of the model will output the same image every time.
+
+num_inference_steps integer
+Number of inference steps to perform. Default value: 50
+
+guidance_scale float
+Guidance scale for the model. Default value: 7.5
+
+octree_resolution integer
+Octree resolution for the model. Default value: 256
+
+textured_mesh boolean
+If set true, textured mesh will be generated and the price charged would be 3 times that of white mesh.
+
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data
+
+model 9 -- fal-ai/hunyuan3d/v2/turbo
+
+About
+Process 3D Model Turbo
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/hunyuan3d/v2/turbo", {
+  input: {
+    input_image_url: "https://storage.googleapis.com/falserverless/model_tests/video_models/robot.png"
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/hunyuan3d/v2/turbo", {
+  input: {
+    input_image_url: "https://storage.googleapis.com/falserverless/model_tests/video_models/robot.png"
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/hunyuan3d/v2/turbo", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/hunyuan3d/v2/turbo", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+input_image_url string
+URL of image to use while generating the 3D model.
+
+seed integer
+The same seed and the same prompt given to the same version of the model will output the same image every time.
+
+num_inference_steps integer
+Number of inference steps to perform. Default value: 50
+
+guidance_scale float
+Guidance scale for the model. Default value: 7.5
+
+octree_resolution integer
+Octree resolution for the model. Default value: 256
+
+textured_mesh boolean
+If set true, textured mesh will be generated and the price charged would be 3 times that of white mesh.
+
+
+{
+  "input_image_url": "https://storage.googleapis.com/falserverless/model_tests/video_models/robot.png",
+  "num_inference_steps": 50,
+  "guidance_scale": 7.5,
+  "octree_resolution": 256
+}
+Output
+#
+model_mesh File
+Generated 3D object file.
+
+seed integer
+Seed value used for generation.
+
+
+{
+  "model_mesh": {
+    "file_size": 720696,
+    "file_name": "white_mesh.glb",
+    "content_type": "application/octet-stream",
+    "url": "https://v3.fal.media/files/lion/WqIhtKPaSoeBtC30qzIGG_white_mesh.glb"
+  }
+}
+Other types
+#
+Hunyuan3DInputMultiView
+#
+front_image_url string
+URL of image to use while generating the 3D model.
+
+back_image_url string
+URL of image to use while generating the 3D model.
+
+left_image_url string
+URL of image to use while generating the 3D model.
+
+seed integer
+The same seed and the same prompt given to the same version of the model will output the same image every time.
+
+num_inference_steps integer
+Number of inference steps to perform. Default value: 50
+
+guidance_scale float
+Guidance scale for the model. Default value: 7.5
+
+octree_resolution integer
+Octree resolution for the model. Default value: 256
+
+textured_mesh boolean
+If set true, textured mesh will be generated and the price charged would be 3 times that of white mesh.
+
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data
+
+model 10 -- fal-ai/triposr
+
+About
+Generate Model
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/triposr", {
+  input: {
+    image_url: "https://raw.githubusercontent.com/VAST-AI-Research/TripoSR/ea034e12a428fa848684a3f9f267b2042d298ca6/examples/hamburger.png"
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/triposr", {
+  input: {
+    image_url: "https://raw.githubusercontent.com/VAST-AI-Research/TripoSR/ea034e12a428fa848684a3f9f267b2042d298ca6/examples/hamburger.png"
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/triposr", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/triposr", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+image_url string
+Path for the image file to be processed.
+
+output_format OutputFormatEnum
+Output format for the 3D model. Default value: "glb"
+
+Possible enum values: glb, obj
+
+do_remove_background boolean
+Whether to remove the background from the input image. Default value: true
+
+foreground_ratio float
+Ratio of the foreground image to the original image. Default value: 0.9
+
+mc_resolution integer
+Resolution of the marching cubes. Above 512 is not recommended. Default value: 256
+
+
+{
+  "image_url": "https://raw.githubusercontent.com/VAST-AI-Research/TripoSR/ea034e12a428fa848684a3f9f267b2042d298ca6/examples/hamburger.png",
+  "output_format": "glb",
+  "do_remove_background": true,
+  "foreground_ratio": 0.9,
+  "mc_resolution": 256
+}
+Output
+#
+model_mesh File
+Generated 3D object file.
+
+timings Timings
+Inference timings.
+
+remeshing_dir File
+Directory containing textures for the remeshed model.
+
+
+{
+  "model_mesh": {
+    "url": "",
+    "content_type": "image/png",
+    "file_name": "z9RV14K95DvU.png",
+    "file_size": 4404019
+  }
+}
+Other types
+#
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data

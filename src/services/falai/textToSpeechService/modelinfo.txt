@@ -1,0 +1,2376 @@
+1)resemble-ai/chatterboxhd/text-to-speech
+
+About
+This endpoint generates a TTS audio file from a given text input.
+
+Fal.ai injects an environment variable FAL_REQUEST_ID for each request. This allows us to correlate logs belonging to a specific API call in the Fal.ai dashboard. We use "local" as a default if the variable isn't set (e.g., when running locally without fal run in a way that injects it, though fal run usually handles this). The request_id is prepended to log messages within the endpoint handlers (e.g., logger.info(f"[{request_id}] ...")).
+
+Parameters: request: TTSInput - The input parameters for the TTS request. response: Response - The response object for the TTS request.
+
+Returns: TTSOutput - The generated audio file and metadata.
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("resemble-ai/chatterboxhd/text-to-speech", {
+  input: {},
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("resemble-ai/chatterboxhd/text-to-speech", {
+  input: {},
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("resemble-ai/chatterboxhd/text-to-speech", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("resemble-ai/chatterboxhd/text-to-speech", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+text string
+Text to synthesize into speech. Default value: "My name is Maximus Decimus Meridius, commander of the Armies of the North, General of the Felix Legions and loyal servant to the true emperor, Marcus Aurelius. Father to a murdered son, husband to a murdered wife. And I will have my vengeance, in this life or the next."
+
+voice VoiceEnum
+The voice to use for the TTS request. If neither voice nor audio are provided, a random voice will be used.
+
+Possible enum values: Aurora, Blade, Britney, Carl, Cliff, Richard, Rico, Siobhan, Vicky
+
+audio_url string
+URL to the audio sample to use as a voice prompt for zero-shot TTS voice cloning. Providing a audio sample will override the voice setting. If neither voice nor audio_url are provided, a random voice will be used.
+
+exaggeration float
+Controls emotion exaggeration. Range typically 0.25 to 2.0. Default value: 0.5
+
+cfg float
+Classifier-free guidance scale (CFG) controls the conditioning factor. Range typically 0.2 to 1.0. For expressive or dramatic speech, try lower cfg values (e.g. ~0.3) and increase exaggeration to around 0.7 or higher. If the reference speaker has a fast speaking style, lowering cfg to around 0.3 can improve pacing. Default value: 0.5
+
+high_quality_audio boolean
+If True, the generated audio will be upscaled to 48kHz. The generation of the audio will take longer, but the quality will be higher. If False, the generated audio will be 24kHz.
+
+seed integer
+Useful to control the reproducibility of the generated audio. Assuming all other properties didn't change, a fixed seed should always generate the exact same audio file. Set to 0 for random seed.
+
+temperature float
+Controls the randomness of generation. Range typically 0.05 to 5. Default value: 0.8
+
+
+{
+  "text": "My name is Maximus Decimus Meridius, commander of the Armies of the North, General of the Felix Legions and loyal servant to the true emperor, Marcus Aurelius. Father to a murdered son, husband to a murdered wife. And I will have my vengeance, in this life or the next.",
+  "audio_url": "https://storage.googleapis.com/chatterbox-demo-samples/prompts/male_rickmorty.mp3",
+  "exaggeration": 0.5,
+  "cfg": 0.5,
+  "temperature": 0.8
+}
+Output
+#
+audio Audio
+The generated audio file.
+
+
+{
+  "audio": {
+    "url": "https://storage.googleapis.com/chatterbox-demo-samples/samples/gladiator_rick.wav"
+  }
+}
+Other types
+#
+Audio
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data
+
+2)fal-ai/orpheus-tts
+
+About
+Generate
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/orpheus-tts", {
+  input: {
+    text: "I just found a hidden treasure in the backyard! <gasp> Check it out!"
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/orpheus-tts", {
+  input: {
+    text: "I just found a hidden treasure in the backyard! <gasp> Check it out!"
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/orpheus-tts", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/orpheus-tts", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+text string
+The text to be converted to speech. You can additionally add the following emotive tags: <laugh>, <chuckle>, <sigh>, <cough>, <sniffle>, <groan>, <yawn>, <gasp>
+
+voice VoiceEnum
+Voice ID for the desired voice. Default value: "tara"
+
+Possible enum values: tara, leah, jess, leo, dan, mia, zac, zoe
+
+temperature float
+Temperature for generation (higher = more creative). Default value: 0.7
+
+repetition_penalty float
+Repetition penalty (>= 1.1 required for stable generations). Default value: 1.2
+
+
+{
+  "text": "I just found a hidden treasure in the backyard! <gasp> Check it out!",
+  "voice": "tara",
+  "temperature": 0.7,
+  "repetition_penalty": 1.2
+}
+Output
+#
+audio File
+The generated speech audio
+
+
+{
+  "audio": {
+    "url": "https://v3.fal.media/files/kangaroo/RQ_pxc7oPdueYqWUqEbPE_tmpjnzvvzx_.wav"
+  }
+}
+Other types
+#
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+3)fal-ai/minimax/speech-02-hd
+
+About
+Convert text to speech using MiniMax HD API.
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/minimax/speech-02-hd", {
+  input: {
+    text: "Hello world! This is a test of the text-to-speech system."
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/minimax/speech-02-hd", {
+  input: {
+    text: "Hello world! This is a test of the text-to-speech system."
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/minimax/speech-02-hd", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/minimax/speech-02-hd", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+text string
+Text to convert to speech (max 5000 characters)
+
+voice_setting VoiceSetting
+Voice configuration settings
+
+audio_setting AudioSetting
+Audio configuration settings
+
+language_boost LanguageBoostEnum
+Enhance recognition of specified languages and dialects
+
+Possible enum values: Chinese, Chinese,Yue, English, Arabic, Russian, Spanish, French, Portuguese, German, Turkish, Dutch, Ukrainian, Vietnamese, Indonesian, Japanese, Italian, Korean, Thai, Polish, Romanian, Greek, Czech, Finnish, Hindi, auto
+
+output_format OutputFormatEnum
+Format of the output content (non-streaming only) Default value: "hex"
+
+Possible enum values: url, hex
+
+pronunciation_dict PronunciationDict
+Custom pronunciation dictionary for text replacement
+
+
+{
+  "text": "Hello world! This is a test of the text-to-speech system.",
+  "voice_setting": {
+    "speed": 1,
+    "vol": 1,
+    "voice_id": "Wise_Woman",
+    "pitch": 0,
+    "english_normalization": false
+  },
+  "output_format": "hex"
+}
+Output
+#
+audio File
+The generated audio file
+
+duration_ms integer
+Duration of the audio in milliseconds
+
+
+{
+  "audio": {
+    "url": "https://fal.media/files/kangaroo/kojPUCNZ9iUGFGMR-xb7h_speech.mp3"
+  }
+}
+Other types
+#
+TextToSpeechTurboRequest
+#
+text string
+Text to convert to speech (max 5000 characters)
+
+voice_setting VoiceSetting
+Voice configuration settings
+
+audio_setting AudioSetting
+Audio configuration settings
+
+language_boost LanguageBoostEnum
+Enhance recognition of specified languages and dialects
+
+Possible enum values: Chinese, Chinese,Yue, English, Arabic, Russian, Spanish, French, Portuguese, German, Turkish, Dutch, Ukrainian, Vietnamese, Indonesian, Japanese, Italian, Korean, Thai, Polish, Romanian, Greek, Czech, Finnish, Hindi, auto
+
+output_format OutputFormatEnum
+Format of the output content (non-streaming only) Default value: "hex"
+
+Possible enum values: url, hex
+
+pronunciation_dict PronunciationDict
+Custom pronunciation dictionary for text replacement
+
+TextToVideoLiveRequest
+#
+prompt string
+prompt_optimizer boolean
+Whether to use the model's prompt optimizer Default value: true
+
+TextToVideoDirectorRequest
+#
+prompt string
+Text prompt for video generation. Camera movement instructions can be added using square brackets (e.g. [Pan left] or [Zoom in]). You can use up to 3 combined movements per prompt. Supported movements: Truck left/right, Pan left/right, Push in/Pull out, Pedestal up/down, Tilt up/down, Zoom in/out, Shake, Tracking shot, Static shot. For example: [Truck left, Pan right, Zoom in]. For a more detailed guide, refer https://sixth-switch-2ac.notion.site/T2V-01-Director-Model-Tutorial-with-camera-movement-1886c20a98eb80f395b8e05291ad8645
+
+prompt_optimizer boolean
+Whether to use the model's prompt optimizer Default value: true
+
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data
+
+ImageToVideoRequest
+#
+prompt string
+image_url string
+URL of the image to use as the first frame
+
+prompt_optimizer boolean
+Whether to use the model's prompt optimizer Default value: true
+
+SubjectReferenceRequest
+#
+prompt string
+subject_reference_image_url string
+URL of the subject reference image to use for consistent subject appearance
+
+prompt_optimizer boolean
+Whether to use the model's prompt optimizer Default value: true
+
+AudioSetting
+#
+sample_rate SampleRateEnum
+Sample rate of generated audio Default value: "32000"
+
+Possible enum values: 8000, 16000, 22050, 24000, 32000, 44100
+
+bitrate BitrateEnum
+Bitrate of generated audio Default value: "128000"
+
+Possible enum values: 32000, 64000, 128000, 256000
+
+format FormatEnum
+Audio format Default value: "mp3"
+
+Possible enum values: mp3, pcm, flac
+
+channel ChannelEnum
+Number of audio channels (1=mono, 2=stereo) Default value: "1"
+
+Possible enum values: 1, 2
+
+MiniMaxTextToImageWithReferenceRequest
+#
+prompt string
+Text prompt for image generation (max 1500 characters)
+
+image_url string
+URL of the subject reference image to use for consistent character appearance
+
+aspect_ratio AspectRatioEnum
+Aspect ratio of the generated image Default value: "1:1"
+
+Possible enum values: 1:1, 16:9, 4:3, 3:2, 2:3, 3:4, 9:16, 21:9
+
+num_images integer
+Number of images to generate (1-9) Default value: 1
+
+prompt_optimizer boolean
+Whether to enable automatic prompt optimization
+
+MiniMaxTextToImageRequest
+#
+prompt string
+Text prompt for image generation (max 1500 characters)
+
+aspect_ratio AspectRatioEnum
+Aspect ratio of the generated image Default value: "1:1"
+
+Possible enum values: 1:1, 16:9, 4:3, 3:2, 2:3, 3:4, 9:16, 21:9
+
+num_images integer
+Number of images to generate (1-9) Default value: 1
+
+prompt_optimizer boolean
+Whether to enable automatic prompt optimization
+
+VoiceSetting
+#
+voice_id string
+Predefined voice ID to use for synthesis Default value: "Wise_Woman"
+
+speed float
+Speech speed (0.5-2.0) Default value: 1
+
+vol float
+Volume (0-10) Default value: 1
+
+pitch integer
+Voice pitch (-12 to 12)
+
+emotion EmotionEnum
+Emotion of the generated speech
+
+Possible enum values: happy, sad, angry, fearful, disgusted, surprised, neutral
+
+english_normalization boolean
+Enables English text normalization to improve number reading performance, with a slight increase in latency
+
+VoiceCloneRequest
+#
+audio_url string
+URL of the input audio file for voice cloning. Should be at least 10 seconds long.
+
+noise_reduction boolean
+Enable noise reduction for the cloned voice
+
+need_volume_normalization boolean
+Enable volume normalization for the cloned voice
+
+accuracy float
+Text validation accuracy threshold (0-1)
+
+text string
+Text to generate a TTS preview with the cloned voice (optional) Default value: "Hello, this is a preview of your cloned voice! I hope you like it!"
+
+model ModelEnum
+TTS model to use for preview. Options: speech-02-hd, speech-02-turbo, speech-01-hd, speech-01-turbo Default value: "speech-02-hd"
+
+Possible enum values: speech-02-hd, speech-02-turbo, speech-01-hd, speech-01-turbo
+
+VoiceDeleteRequest
+#
+voice_id string
+The voice_id of the voice to be deleted
+
+TextToVideoRequest
+#
+prompt string
+prompt_optimizer boolean
+Whether to use the model's prompt optimizer Default value: true
+
+ImageToVideoDirectorRequest
+#
+prompt string
+Text prompt for video generation. Camera movement instructions can be added using square brackets (e.g. [Pan left] or [Zoom in]). You can use up to 3 combined movements per prompt. Supported movements: Truck left/right, Pan left/right, Push in/Pull out, Pedestal up/down, Tilt up/down, Zoom in/out, Shake, Tracking shot, Static shot. For example: [Truck left, Pan right, Zoom in]. For a more detailed guide, refer https://sixth-switch-2ac.notion.site/T2V-01-Director-Model-Tutorial-with-camera-movement-1886c20a98eb80f395b8e05291ad8645
+
+image_url string
+URL of the image to use as the first frame
+
+prompt_optimizer boolean
+Whether to use the model's prompt optimizer Default value: true
+
+PronunciationDict
+#
+tone_list list<string>
+List of pronunciation replacements in format ['text/(pronunciation)', ...]. For Chinese, tones are 1-5. Example: ['燕少飞/(yan4)(shao3)(fei1)']
+
+4)fal-ai/dia-tts
+
+About
+Generate
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/dia-tts", {
+  input: {
+    text: "[S1] Dia is an open weights text to dialogue model. [S2] You get full control over scripts and voices. [S1] Wow. Amazing. (laughs) [S2] Try it now on Fal."
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/dia-tts", {
+  input: {
+    text: "[S1] Dia is an open weights text to dialogue model. [S2] You get full control over scripts and voices. [S1] Wow. Amazing. (laughs) [S2] Try it now on Fal."
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/dia-tts", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/dia-tts", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+text string
+The text to be converted to speech.
+
+
+{
+  "text": "[S1] Dia is an open weights text to dialogue model. [S2] You get full control over scripts and voices. [S1] Wow. Amazing. (laughs) [S2] Try it now on Fal."
+}
+Output
+#
+audio File
+The generated speech audio
+
+
+{
+  "audio": {
+    "url": "https://v3.fal.media/files/elephant/d5lORit2npFfBykcAtyUr_tmplacfh8oa.mp3"
+  }
+}
+Other types
+#
+CloneRequest
+#
+text string
+The text to be converted to speech.
+
+ref_audio_url string
+The URL of the reference audio file.
+
+ref_text string
+The reference text to be used for TTS.
+
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+5)fal-ai/minimax/voice-clone
+
+About
+Clone a voice from an audio URL. Optionally, generate a TTS preview with the cloned voice.
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/minimax/voice-clone", {
+  input: {
+    audio_url: "https://storage.googleapis.com/falserverless/model_tests/zonos/demo_voice_zonos.wav"
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/minimax/voice-clone", {
+  input: {
+    audio_url: "https://storage.googleapis.com/falserverless/model_tests/zonos/demo_voice_zonos.wav"
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/minimax/voice-clone", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/minimax/voice-clone", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+audio_url string
+URL of the input audio file for voice cloning. Should be at least 10 seconds long.
+
+noise_reduction boolean
+Enable noise reduction for the cloned voice
+
+need_volume_normalization boolean
+Enable volume normalization for the cloned voice
+
+accuracy float
+Text validation accuracy threshold (0-1)
+
+text string
+Text to generate a TTS preview with the cloned voice (optional) Default value: "Hello, this is a preview of your cloned voice! I hope you like it!"
+
+model ModelEnum
+TTS model to use for preview. Options: speech-02-hd, speech-02-turbo, speech-01-hd, speech-01-turbo Default value: "speech-02-hd"
+
+Possible enum values: speech-02-hd, speech-02-turbo, speech-01-hd, speech-01-turbo
+
+
+{
+  "audio_url": "https://storage.googleapis.com/falserverless/model_tests/zonos/demo_voice_zonos.wav",
+  "text": "Hello, this is a preview of your cloned voice! I hope you like it!",
+  "model": "speech-02-hd"
+}
+Output
+#
+custom_voice_id string
+The cloned voice ID for use with TTS
+
+audio File
+Preview audio generated with the cloned voice (if requested)
+
+
+{
+  "custom_voice_id": "",
+  "audio": {
+    "url": "https://fal.media/files/kangaroo/kojPUCNZ9iUGFGMR-xb7h_speech.mp3"
+  }
+}
+Other types
+#
+TextToSpeechTurboRequest
+#
+text string
+Text to convert to speech (max 5000 characters)
+
+voice_setting VoiceSetting
+Voice configuration settings
+
+audio_setting AudioSetting
+Audio configuration settings
+
+language_boost LanguageBoostEnum
+Enhance recognition of specified languages and dialects
+
+Possible enum values: Chinese, Chinese,Yue, English, Arabic, Russian, Spanish, French, Portuguese, German, Turkish, Dutch, Ukrainian, Vietnamese, Indonesian, Japanese, Italian, Korean, Thai, Polish, Romanian, Greek, Czech, Finnish, Hindi, auto
+
+output_format OutputFormatEnum
+Format of the output content (non-streaming only) Default value: "hex"
+
+Possible enum values: url, hex
+
+pronunciation_dict PronunciationDict
+Custom pronunciation dictionary for text replacement
+
+TextToVideoLiveRequest
+#
+prompt string
+prompt_optimizer boolean
+Whether to use the model's prompt optimizer Default value: true
+
+TextToVideoDirectorRequest
+#
+prompt string
+Text prompt for video generation. Camera movement instructions can be added using square brackets (e.g. [Pan left] or [Zoom in]). You can use up to 3 combined movements per prompt. Supported movements: Truck left/right, Pan left/right, Push in/Pull out, Pedestal up/down, Tilt up/down, Zoom in/out, Shake, Tracking shot, Static shot. For example: [Truck left, Pan right, Zoom in]. For a more detailed guide, refer https://sixth-switch-2ac.notion.site/T2V-01-Director-Model-Tutorial-with-camera-movement-1886c20a98eb80f395b8e05291ad8645
+
+prompt_optimizer boolean
+Whether to use the model's prompt optimizer Default value: true
+
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data
+
+ImageToVideoRequest
+#
+prompt string
+image_url string
+URL of the image to use as the first frame
+
+prompt_optimizer boolean
+Whether to use the model's prompt optimizer Default value: true
+
+SubjectReferenceRequest
+#
+prompt string
+subject_reference_image_url string
+URL of the subject reference image to use for consistent subject appearance
+
+prompt_optimizer boolean
+Whether to use the model's prompt optimizer Default value: true
+
+AudioSetting
+#
+sample_rate SampleRateEnum
+Sample rate of generated audio Default value: "32000"
+
+Possible enum values: 8000, 16000, 22050, 24000, 32000, 44100
+
+bitrate BitrateEnum
+Bitrate of generated audio Default value: "128000"
+
+Possible enum values: 32000, 64000, 128000, 256000
+
+format FormatEnum
+Audio format Default value: "mp3"
+
+Possible enum values: mp3, pcm, flac
+
+channel ChannelEnum
+Number of audio channels (1=mono, 2=stereo) Default value: "1"
+
+Possible enum values: 1, 2
+
+MiniMaxTextToImageWithReferenceRequest
+#
+prompt string
+Text prompt for image generation (max 1500 characters)
+
+image_url string
+URL of the subject reference image to use for consistent character appearance
+
+aspect_ratio AspectRatioEnum
+Aspect ratio of the generated image Default value: "1:1"
+
+Possible enum values: 1:1, 16:9, 4:3, 3:2, 2:3, 3:4, 9:16, 21:9
+
+num_images integer
+Number of images to generate (1-9) Default value: 1
+
+prompt_optimizer boolean
+Whether to enable automatic prompt optimization
+
+MiniMaxTextToImageRequest
+#
+prompt string
+Text prompt for image generation (max 1500 characters)
+
+aspect_ratio AspectRatioEnum
+Aspect ratio of the generated image Default value: "1:1"
+
+Possible enum values: 1:1, 16:9, 4:3, 3:2, 2:3, 3:4, 9:16, 21:9
+
+num_images integer
+Number of images to generate (1-9) Default value: 1
+
+prompt_optimizer boolean
+Whether to enable automatic prompt optimization
+
+VoiceSetting
+#
+voice_id string
+Predefined voice ID to use for synthesis Default value: "Wise_Woman"
+
+speed float
+Speech speed (0.5-2.0) Default value: 1
+
+vol float
+Volume (0-10) Default value: 1
+
+pitch integer
+Voice pitch (-12 to 12)
+
+emotion EmotionEnum
+Emotion of the generated speech
+
+Possible enum values: happy, sad, angry, fearful, disgusted, surprised, neutral
+
+english_normalization boolean
+Enables English text normalization to improve number reading performance, with a slight increase in latency
+
+VoiceDeleteRequest
+#
+voice_id string
+The voice_id of the voice to be deleted
+
+TextToVideoRequest
+#
+prompt string
+prompt_optimizer boolean
+Whether to use the model's prompt optimizer Default value: true
+
+ImageToVideoDirectorRequest
+#
+prompt string
+Text prompt for video generation. Camera movement instructions can be added using square brackets (e.g. [Pan left] or [Zoom in]). You can use up to 3 combined movements per prompt. Supported movements: Truck left/right, Pan left/right, Push in/Pull out, Pedestal up/down, Tilt up/down, Zoom in/out, Shake, Tracking shot, Static shot. For example: [Truck left, Pan right, Zoom in]. For a more detailed guide, refer https://sixth-switch-2ac.notion.site/T2V-01-Director-Model-Tutorial-with-camera-movement-1886c20a98eb80f395b8e05291ad8645
+
+image_url string
+URL of the image to use as the first frame
+
+prompt_optimizer boolean
+Whether to use the model's prompt optimizer Default value: true
+
+TextToSpeechHDRequest
+#
+text string
+Text to convert to speech (max 5000 characters)
+
+voice_setting VoiceSetting
+Voice configuration settings
+
+audio_setting AudioSetting
+Audio configuration settings
+
+language_boost LanguageBoostEnum
+Enhance recognition of specified languages and dialects
+
+Possible enum values: Chinese, Chinese,Yue, English, Arabic, Russian, Spanish, French, Portuguese, German, Turkish, Dutch, Ukrainian, Vietnamese, Indonesian, Japanese, Italian, Korean, Thai, Polish, Romanian, Greek, Czech, Finnish, Hindi, auto
+
+output_format OutputFormatEnum
+Format of the output content (non-streaming only) Default value: "hex"
+
+Possible enum values: url, hex
+
+pronunciation_dict PronunciationDict
+Custom pronunciation dictionary for text replacement
+
+PronunciationDict
+#
+tone_list list<string>
+List of pronunciation replacements in format ['text/(pronunciation)', ...]. For Chinese, tones are 1-5. Example: ['燕少飞/(yan4)(shao3)(fei1)']
+
+6)fal-ai/playai/tts/v3
+
+About
+V3
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/playai/tts/v3", {
+  input: {
+    input: "The quick brown fox jumped over the lazy dog.",
+    voice: "Jennifer (English (US)/American)"
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/playai/tts/v3", {
+  input: {
+    input: "The quick brown fox jumped over the lazy dog.",
+    voice: "Jennifer (English (US)/American)"
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/playai/tts/v3", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/playai/tts/v3", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+input string
+The text to be converted to speech.
+
+voice string
+The unique ID of a PlayHT or Cloned Voice, or a name from the available presets.
+
+response_format ResponseFormatEnum
+The format of the response. Default value: "url"
+
+Possible enum values: url, bytes
+
+seed integer
+An integer number greater than or equal to 0. If equal to null or not provided, a random seed will be used. Useful to control the reproducibility of the generated audio. Assuming all other properties didn't change, a fixed seed should always generate the exact same audio file.
+
+
+{
+  "input": "The quick brown fox jumped over the lazy dog.",
+  "voice": "Jennifer (English (US)/American)",
+  "response_format": "url",
+  "seed": null
+}
+Output
+#
+audio AudioFile
+The generated audio file.
+
+
+{
+  "audio": {
+    "file_size": 57069,
+    "duration": 2.3486666666666665,
+    "file_name": "166db034-7421-4767-adad-ab7c36a99b75.mp3",
+    "content_type": "audio/mpeg",
+    "url": "https://fal-api-audio-uploads.s3.amazonaws.com/166db034-7421-4767-adad-ab7c36a99b75.mp3"
+  }
+}
+Other types
+#
+WordTime
+#
+text string
+The word to inpaint.
+
+timestamp list<void>
+The start and end timestamp of the word.
+
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data
+
+AudioFile
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data
+
+duration float
+The duration of the audio file in seconds.
+
+7)fal-ai/elevenlabs/tts/turbo-v2.5
+
+About
+ElevenLabs Turbo v2.5 model for text-to-speech generation.
+
+High quality with lowest latency, ideal for real-time applications. Supports 32 languages while maintaining natural voice quality.
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/elevenlabs/tts/turbo-v2.5", {
+  input: {
+    text: "Hello! This is a test of the text to speech system, powered by ElevenLabs. How does it sound?"
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+Streaming
+#
+This model supports streaming requests. You can stream data directly to the model and get the result in real-time.
+
+
+import { fal } from "@fal-ai/client";
+
+const stream = await fal.stream("fal-ai/elevenlabs/tts/turbo-v2.5", {
+  input: {
+    text: "Hello! This is a test of the text to speech system, powered by ElevenLabs. How does it sound?"
+  }
+});
+
+for await (const event of stream) {
+  console.log(event);
+}
+
+const result = await stream.done();
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/elevenlabs/tts/turbo-v2.5", {
+  input: {
+    text: "Hello! This is a test of the text to speech system, powered by ElevenLabs. How does it sound?"
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/elevenlabs/tts/turbo-v2.5", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/elevenlabs/tts/turbo-v2.5", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+text string
+The text to convert to speech
+
+voice string
+The voice to use for speech generation Default value: "Rachel"
+
+stability float
+Voice stability (0-1) Default value: 0.5
+
+similarity_boost float
+Similarity boost (0-1) Default value: 0.75
+
+style float
+Style exaggeration (0-1)
+
+speed float
+Speech speed (0.7-1.2). Values below 1.0 slow down the speech, above 1.0 speed it up. Extreme values may affect quality. Default value: 1
+
+timestamps boolean
+Whether to return timestamps for each word in the generated speech
+
+previous_text string
+The text that came before the text of the current request. Can be used to improve the speech's continuity when concatenating together multiple generations or to influence the speech's continuity in the current generation.
+
+next_text string
+The text that comes after the text of the current request. Can be used to improve the speech's continuity when concatenating together multiple generations or to influence the speech's continuity in the current generation.
+
+language_code string
+Language code (ISO 639-1) used to enforce a language for the model. Currently only Turbo v2.5 and Flash v2.5 support language enforcement. For other models, an error will be returned if language code is provided.
+
+
+{
+  "text": "Hello! This is a test of the text to speech system, powered by ElevenLabs. How does it sound?",
+  "voice": "Aria",
+  "stability": 0.5,
+  "similarity_boost": 0.75,
+  "speed": 1
+}
+Output
+#
+audio File
+The generated audio file
+
+timestamps list<void>
+Timestamps for each word in the generated speech. Only returned if timestamps is set to True in the request.
+
+
+{
+  "audio": {
+    "url": "https://v3.fal.media/files/zebra/zJL_oRY8h5RWwjoK1w7tx_output.mp3"
+  }
+}
+Other types
+#
+SpeechToTextRequest
+#
+audio_url string
+URL of the audio file to transcribe
+
+language_code string
+Language code of the audio
+
+tag_audio_events boolean
+Tag audio events like laughter, applause, etc. Default value: true
+
+diarize boolean
+Whether to annotate who is speaking Default value: true
+
+VoiceCloningRequest
+#
+audio_urls list<AudioInput>
+List of audio files to use for voice cloning
+
+remove_background_noise boolean
+Whether to remove background noise from the audio files Default value: true
+
+TextToSpeechStreamRequest
+#
+text string
+The text to convert to speech
+
+voice string
+The voice to use for speech generation Default value: "Rachel"
+
+stability float
+Voice stability (0-1) Default value: 0.5
+
+similarity_boost float
+Similarity boost (0-1) Default value: 0.75
+
+style float
+Style exaggeration (0-1)
+
+speed float
+Speech speed (0.7-1.2). Values below 1.0 slow down the speech, above 1.0 speed it up. Extreme values may affect quality. Default value: 1
+
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+AudioIsolationRequest
+#
+audio_url string
+URL of the audio file to isolate voice from
+
+SoundEffectRequest
+#
+text string
+The text describing the sound effect to generate
+
+duration_seconds float
+Duration in seconds (0.5-22). If None, optimal duration will be determined from prompt.
+
+prompt_influence float
+How closely to follow the prompt (0-1). Higher values mean less variation. Default value: 0.3
+
+TranscriptionWord
+#
+text string
+The transcribed word or audio event
+
+start float
+Start time in seconds
+
+end float
+End time in seconds
+
+type string
+Type of element (word, spacing, or audio_event)
+
+speaker_id string
+Speaker identifier if diarization was enabled
+
+8)fal-ai/minimax/speech-02-turbo
+
+About
+Convert text to speech using MiniMax Turbo API.
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/minimax/speech-02-turbo", {
+  input: {
+    text: "Hello world! This is a test of the text-to-speech system."
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/minimax/speech-02-turbo", {
+  input: {
+    text: "Hello world! This is a test of the text-to-speech system."
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/minimax/speech-02-turbo", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/minimax/speech-02-turbo", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+text string
+Text to convert to speech (max 5000 characters)
+
+voice_setting VoiceSetting
+Voice configuration settings
+
+audio_setting AudioSetting
+Audio configuration settings
+
+language_boost LanguageBoostEnum
+Enhance recognition of specified languages and dialects
+
+Possible enum values: Chinese, Chinese,Yue, English, Arabic, Russian, Spanish, French, Portuguese, German, Turkish, Dutch, Ukrainian, Vietnamese, Indonesian, Japanese, Italian, Korean, Thai, Polish, Romanian, Greek, Czech, Finnish, Hindi, auto
+
+output_format OutputFormatEnum
+Format of the output content (non-streaming only) Default value: "hex"
+
+Possible enum values: url, hex
+
+pronunciation_dict PronunciationDict
+Custom pronunciation dictionary for text replacement
+
+
+{
+  "text": "Hello world! This is a test of the text-to-speech system.",
+  "voice_setting": {
+    "speed": 1,
+    "vol": 1,
+    "voice_id": "Wise_Woman",
+    "pitch": 0,
+    "english_normalization": false
+  },
+  "output_format": "hex"
+}
+Output
+#
+audio File
+The generated audio file
+
+duration_ms integer
+Duration of the audio in milliseconds
+
+
+{
+  "audio": {
+    "url": "https://fal.media/files/kangaroo/kojPUCNZ9iUGFGMR-xb7h_speech.mp3"
+  }
+}
+Other types
+#
+TextToVideoLiveRequest
+#
+prompt string
+prompt_optimizer boolean
+Whether to use the model's prompt optimizer Default value: true
+
+TextToVideoDirectorRequest
+#
+prompt string
+Text prompt for video generation. Camera movement instructions can be added using square brackets (e.g. [Pan left] or [Zoom in]). You can use up to 3 combined movements per prompt. Supported movements: Truck left/right, Pan left/right, Push in/Pull out, Pedestal up/down, Tilt up/down, Zoom in/out, Shake, Tracking shot, Static shot. For example: [Truck left, Pan right, Zoom in]. For a more detailed guide, refer https://sixth-switch-2ac.notion.site/T2V-01-Director-Model-Tutorial-with-camera-movement-1886c20a98eb80f395b8e05291ad8645
+
+prompt_optimizer boolean
+Whether to use the model's prompt optimizer Default value: true
+
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data
+
+ImageToVideoRequest
+#
+prompt string
+image_url string
+URL of the image to use as the first frame
+
+prompt_optimizer boolean
+Whether to use the model's prompt optimizer Default value: true
+
+SubjectReferenceRequest
+#
+prompt string
+subject_reference_image_url string
+URL of the subject reference image to use for consistent subject appearance
+
+prompt_optimizer boolean
+Whether to use the model's prompt optimizer Default value: true
+
+AudioSetting
+#
+sample_rate SampleRateEnum
+Sample rate of generated audio Default value: "32000"
+
+Possible enum values: 8000, 16000, 22050, 24000, 32000, 44100
+
+bitrate BitrateEnum
+Bitrate of generated audio Default value: "128000"
+
+Possible enum values: 32000, 64000, 128000, 256000
+
+format FormatEnum
+Audio format Default value: "mp3"
+
+Possible enum values: mp3, pcm, flac
+
+channel ChannelEnum
+Number of audio channels (1=mono, 2=stereo) Default value: "1"
+
+Possible enum values: 1, 2
+
+MiniMaxTextToImageWithReferenceRequest
+#
+prompt string
+Text prompt for image generation (max 1500 characters)
+
+image_url string
+URL of the subject reference image to use for consistent character appearance
+
+aspect_ratio AspectRatioEnum
+Aspect ratio of the generated image Default value: "1:1"
+
+Possible enum values: 1:1, 16:9, 4:3, 3:2, 2:3, 3:4, 9:16, 21:9
+
+num_images integer
+Number of images to generate (1-9) Default value: 1
+
+prompt_optimizer boolean
+Whether to enable automatic prompt optimization
+
+MiniMaxTextToImageRequest
+#
+prompt string
+Text prompt for image generation (max 1500 characters)
+
+aspect_ratio AspectRatioEnum
+Aspect ratio of the generated image Default value: "1:1"
+
+Possible enum values: 1:1, 16:9, 4:3, 3:2, 2:3, 3:4, 9:16, 21:9
+
+num_images integer
+Number of images to generate (1-9) Default value: 1
+
+prompt_optimizer boolean
+Whether to enable automatic prompt optimization
+
+VoiceSetting
+#
+voice_id string
+Predefined voice ID to use for synthesis Default value: "Wise_Woman"
+
+speed float
+Speech speed (0.5-2.0) Default value: 1
+
+vol float
+Volume (0-10) Default value: 1
+
+pitch integer
+Voice pitch (-12 to 12)
+
+emotion EmotionEnum
+Emotion of the generated speech
+
+Possible enum values: happy, sad, angry, fearful, disgusted, surprised, neutral
+
+english_normalization boolean
+Enables English text normalization to improve number reading performance, with a slight increase in latency
+
+VoiceCloneRequest
+#
+audio_url string
+URL of the input audio file for voice cloning. Should be at least 10 seconds long.
+
+noise_reduction boolean
+Enable noise reduction for the cloned voice
+
+need_volume_normalization boolean
+Enable volume normalization for the cloned voice
+
+accuracy float
+Text validation accuracy threshold (0-1)
+
+text string
+Text to generate a TTS preview with the cloned voice (optional) Default value: "Hello, this is a preview of your cloned voice! I hope you like it!"
+
+model ModelEnum
+TTS model to use for preview. Options: speech-02-hd, speech-02-turbo, speech-01-hd, speech-01-turbo Default value: "speech-02-hd"
+
+Possible enum values: speech-02-hd, speech-02-turbo, speech-01-hd, speech-01-turbo
+
+VoiceDeleteRequest
+#
+voice_id string
+The voice_id of the voice to be deleted
+
+TextToVideoRequest
+#
+prompt string
+prompt_optimizer boolean
+Whether to use the model's prompt optimizer Default value: true
+
+ImageToVideoDirectorRequest
+#
+prompt string
+Text prompt for video generation. Camera movement instructions can be added using square brackets (e.g. [Pan left] or [Zoom in]). You can use up to 3 combined movements per prompt. Supported movements: Truck left/right, Pan left/right, Push in/Pull out, Pedestal up/down, Tilt up/down, Zoom in/out, Shake, Tracking shot, Static shot. For example: [Truck left, Pan right, Zoom in]. For a more detailed guide, refer https://sixth-switch-2ac.notion.site/T2V-01-Director-Model-Tutorial-with-camera-movement-1886c20a98eb80f395b8e05291ad8645
+
+image_url string
+URL of the image to use as the first frame
+
+prompt_optimizer boolean
+Whether to use the model's prompt optimizer Default value: true
+
+TextToSpeechHDRequest
+#
+text string
+Text to convert to speech (max 5000 characters)
+
+voice_setting VoiceSetting
+Voice configuration settings
+
+audio_setting AudioSetting
+Audio configuration settings
+
+language_boost LanguageBoostEnum
+Enhance recognition of specified languages and dialects
+
+Possible enum values: Chinese, Chinese,Yue, English, Arabic, Russian, Spanish, French, Portuguese, German, Turkish, Dutch, Ukrainian, Vietnamese, Indonesian, Japanese, Italian, Korean, Thai, Polish, Romanian, Greek, Czech, Finnish, Hindi, auto
+
+output_format OutputFormatEnum
+Format of the output content (non-streaming only) Default value: "hex"
+
+Possible enum values: url, hex
+
+pronunciation_dict PronunciationDict
+Custom pronunciation dictionary for text replacement
+
+PronunciationDict
+#
+tone_list list<string>
+List of pronunciation replacements in format ['text/(pronunciation)', ...]. For Chinese, tones are 1-5. Example: ['燕少飞/(yan4)(shao3)(fei1)']
+
+9)fal-ai/chatterbox/text-to-speech
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/chatterbox/text-to-speech", {
+  input: {
+    text: "I just found a hidden treasure in the backyard! Check it out!"
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/chatterbox/text-to-speech", {
+  input: {
+    text: "I just found a hidden treasure in the backyard! Check it out!"
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/chatterbox/text-to-speech", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/chatterbox/text-to-speech", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+text string
+The text to be converted to speech. You can additionally add the following emotive tags: <laugh>, <chuckle>, <sigh>, <cough>, <sniffle>, <groan>, <yawn>, <gasp>
+
+audio_url string
+Optional URL to an audio file to use as a reference for the generated speech. If provided, the model will try to match the style and tone of the reference audio. Default value: "https://storage.googleapis.com/chatterbox-demo-samples/prompts/male_rickmorty.mp3"
+
+exaggeration float
+Exaggeration factor for the generated speech (0.0 = no exaggeration, 1.0 = maximum exaggeration). Default value: 0.25
+
+temperature float
+Temperature for generation (higher = more creative). Default value: 0.7
+
+cfg float
+Default value: 0.5
+
+seed integer
+Useful to control the reproducibility of the generated audio. Assuming all other properties didn't change, a fixed seed should always generate the exact same audio file. Set to 0 for random seed..
+
+
+{
+  "text": "I just found a hidden treasure in the backyard! Check it out!",
+  "audio_url": "https://storage.googleapis.com/chatterbox-demo-samples/prompts/male_rickmorty.mp3",
+  "exaggeration": 0.25,
+  "temperature": 0.7,
+  "cfg": 0.5
+}
+Output
+#
+
+Other types
+#
+ChatterboxVCRequest
+#
+source_audio_url string
+target_voice_audio_url string
+Optional URL to an audio file to use as a reference for the generated speech. If provided, the model will try to match the style and tone of the reference audio.
+
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data
+

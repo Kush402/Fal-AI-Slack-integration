@@ -1,0 +1,3364 @@
+ 1)fal-ai/luma-dream-machine/ray-2/modify
+
+ About
+Ray2 Modify Video
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/luma-dream-machine/ray-2/modify", {
+  input: {
+    video_url: "https://v3.fal.media/files/zebra/9aDde3Te2kuJYHdR0Kz8R_output.mp4"
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/luma-dream-machine/ray-2/modify", {
+  input: {
+    video_url: "https://v3.fal.media/files/zebra/9aDde3Te2kuJYHdR0Kz8R_output.mp4"
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/luma-dream-machine/ray-2/modify", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/luma-dream-machine/ray-2/modify", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+video_url string
+URL of the input video to modify
+
+image_url string
+Optional URL of the first frame image for modification
+
+prompt string
+Instruction for modifying the video
+
+mode ModeEnum
+Amount of modification to apply to the video, adhere_1 is the least amount of modification, reimagine_3 is the most Default value: "flex_1"
+
+Possible enum values: adhere_1, adhere_2, adhere_3, flex_1, flex_2, flex_3, reimagine_1, reimagine_2, reimagine_3
+
+
+{
+  "video_url": "https://v3.fal.media/files/zebra/9aDde3Te2kuJYHdR0Kz8R_output.mp4",
+  "image_url": "https://fal.media/files/koala/Kv2821G03ggpKK2AiZX71_d5fa7bacf06049cfaeb9588f6003b6d5.jpg",
+  "mode": "flex_1"
+}
+Output
+#
+video File
+URL of the modified video
+
+
+{
+  "video": {
+    "url": "https://v3.fal.media/files/lion/_2UO2QC26T_R8vKeVGAdX_output.mp4"
+  }
+}
+Other types
+#
+TextToVideoRequest
+#
+prompt string
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video Default value: "16:9"
+
+Possible enum values: 16:9, 9:16, 4:3, 3:4, 21:9, 9:21
+
+loop boolean
+Whether the video should loop (end of video is blended with the beginning)
+
+Ray2TextToVideoRequest
+#
+prompt string
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video Default value: "16:9"
+
+Possible enum values: 16:9, 9:16, 4:3, 3:4, 21:9, 9:21
+
+loop boolean
+Whether the video should loop (end of video is blended with the beginning)
+
+resolution ResolutionEnum
+The resolution of the generated video (720p costs 2x more, 1080p costs 4x more) Default value: "540p"
+
+Possible enum values: 540p, 720p, 1080p
+
+duration DurationEnum
+The duration of the generated video (9s costs 2x more) Default value: "5s"
+
+Possible enum values: 5s, 9s
+
+ReframeVideoRequest
+#
+video_url string
+URL of the input video to reframe
+
+aspect_ratio AspectRatioEnum
+The aspect ratio of the reframed video
+
+Possible enum values: 1:1, 16:9, 9:16, 4:3, 3:4, 21:9, 9:21
+
+image_url string
+Optional URL of the first frame image for reframing
+
+grid_position_x integer
+X position of the grid for reframing
+
+grid_position_y integer
+Y position of the grid for reframing
+
+prompt string
+Optional prompt for reframing
+
+x_end integer
+End X coordinate for reframing
+
+x_start integer
+Start X coordinate for reframing
+
+y_end integer
+End Y coordinate for reframing
+
+y_start integer
+Start Y coordinate for reframing
+
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data
+
+ImageToVideoRequest
+#
+prompt string
+image_url string
+end_image_url string
+An image to blend the end of the video with
+
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video Default value: "16:9"
+
+Possible enum values: 16:9, 9:16, 4:3, 3:4, 21:9, 9:21
+
+loop boolean
+Whether the video should loop (end of video is blended with the beginning)
+
+Ray2ImageToVideoRequest
+#
+prompt string
+image_url string
+Initial image to start the video from. Can be used together with end_image_url.
+
+end_image_url string
+Final image to end the video with. Can be used together with image_url.
+
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video Default value: "16:9"
+
+Possible enum values: 16:9, 9:16, 4:3, 3:4, 21:9, 9:21
+
+loop boolean
+Whether the video should loop (end of video is blended with the beginning)
+
+resolution ResolutionEnum
+The resolution of the generated video (720p costs 2x more, 1080p costs 4x more) Default value: "540p"
+
+Possible enum values: 540p, 720p, 1080p
+
+duration DurationEnum
+The duration of the generated video Default value: "5s"
+
+Possible enum values: 5s
+
+Related Models
+
+2)fal-ai/wan-vace-14b
+
+About
+Endpoint for inpainting a video from all supported sources.
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/wan-vace-14b", {
+  input: {
+    prompt: "The video shows a man riding a horse on a vast grassland. He has long lavender hair and wears a traditional dress of a white top and black pants. The animation style makes him look like he is doing some kind of outdoor activity or performing. The background is a spectacular mountain range and cloud sky, giving a sense of tranquility and vastness. The entire video is shot from a fixed angle, focusing on the rider and his horse.",
+    video_url: ""
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/wan-vace-14b", {
+  input: {
+    prompt: "The video shows a man riding a horse on a vast grassland. He has long lavender hair and wears a traditional dress of a white top and black pants. The animation style makes him look like he is doing some kind of outdoor activity or performing. The background is a spectacular mountain range and cloud sky, giving a sense of tranquility and vastness. The entire video is shot from a fixed angle, focusing on the rider and his horse.",
+    video_url: ""
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/wan-vace-14b", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/wan-vace-14b", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+prompt string
+The text prompt to guide video generation.
+
+negative_prompt string
+Negative prompt for video generation. Default value: "letterboxing, borders, black bars, bright colors, overexposed, static, blurred details, subtitles, style, artwork, painting, picture, still, overall gray, worst quality, low quality, JPEG compression residue, ugly, incomplete, extra fingers, poorly drawn hands, poorly drawn faces, deformed, disfigured, malformed limbs, fused fingers, still picture, cluttered background, three legs, many people in the background, walking backwards"
+
+match_input_num_frames boolean
+If true, the number of frames in the generated video will match the number of frames in the input video. If false, the number of frames will be determined by the num_frames parameter.
+
+num_frames integer
+Number of frames to generate. Must be between 81 to 241 (inclusive). Default value: 81
+
+match_input_frames_per_second boolean
+If true, the frames per second of the generated video will match the input video. If false, the frames per second will be determined by the frames_per_second parameter.
+
+frames_per_second integer
+Frames per second of the generated video. Must be between 5 to 30. Ignored if match_input_frames_per_second is true. Default value: 16
+
+task TaskEnum
+Task type for the model. Default value: "depth"
+
+Possible enum values: depth, pose, inpainting, outpainting, reframe
+
+seed integer
+Random seed for reproducibility. If None, a random seed is chosen.
+
+resolution ResolutionEnum
+Resolution of the generated video (480p,580p, or 720p). Default value: "720p"
+
+Possible enum values: 480p, 580p, 720p
+
+aspect_ratio AspectRatioEnum
+Aspect ratio of the generated video (16:9 or 9:16). Default value: "auto"
+
+Possible enum values: auto, 16:9, 1:1, 9:16
+
+num_inference_steps integer
+Number of inference steps for sampling. Higher values give better quality but take longer. Default value: 30
+
+guidance_scale float
+Guidance scale for classifier-free guidance. Higher values encourage the model to generate images closely related to the text prompt. Default value: 5
+
+video_url string
+URL to the source video file. If provided, the model will use this video as a reference.
+
+mask_video_url string
+URL to the source mask file. If provided, the model will use this mask as a reference.
+
+mask_image_url string
+URL to the guiding mask file. If provided, the model will use this mask as a reference to create masked video. If provided mask video url will be ignored.
+
+ref_image_urls list<string>
+Urls to source reference image. If provided, the model will use this image as reference.
+
+enable_safety_checker boolean
+If set to true, the safety checker will be enabled.
+
+enable_prompt_expansion boolean
+Whether to enable prompt expansion.
+
+preprocess boolean
+Whether to preprocess the input video.
+
+acceleration AccelerationEnum
+Acceleration to use for inference. Options are 'none' or 'regular'. Accelerated inference will very slightly affect output, but will be significantly faster.
+
+Possible enum values: none, regular
+
+
+{
+  "prompt": "The video shows a man riding a horse on a vast grassland. He has long lavender hair and wears a traditional dress of a white top and black pants. The animation style makes him look like he is doing some kind of outdoor activity or performing. The background is a spectacular mountain range and cloud sky, giving a sense of tranquility and vastness. The entire video is shot from a fixed angle, focusing on the rider and his horse.",
+  "negative_prompt": "letterboxing, borders, black bars, bright colors, overexposed, static, blurred details, subtitles, style, artwork, painting, picture, still, overall gray, worst quality, low quality, JPEG compression residue, ugly, incomplete, extra fingers, poorly drawn hands, poorly drawn faces, deformed, disfigured, malformed limbs, fused fingers, still picture, cluttered background, three legs, many people in the background, walking backwards",
+  "match_input_num_frames": false,
+  "num_frames": 81,
+  "match_input_frames_per_second": false,
+  "frames_per_second": 16,
+  "task": "depth",
+  "resolution": "720p",
+  "aspect_ratio": "auto",
+  "num_inference_steps": 30,
+  "guidance_scale": 5,
+  "video_url": "",
+  "enable_safety_checker": true,
+  "enable_prompt_expansion": false,
+  "preprocess": false,
+  "acceleration": "none"
+}
+Output
+#
+video File
+The generated video file.
+
+prompt string
+The prompt used for generation.
+
+seed integer
+The seed used for generation.
+
+
+{
+  "video": {
+    "url": "",
+    "content_type": "image/png",
+    "file_name": "z9RV14K95DvU.png",
+    "file_size": 4404019
+  },
+  "prompt": ""
+}
+Other types
+#
+WanVACEReframeResponse
+#
+video File
+The generated reframe video file.
+
+prompt string
+The prompt used for generation.
+
+seed integer
+The seed used for generation.
+
+WanVACEReframeRequest
+#
+prompt string
+The text prompt to guide video generation. Optional for reframing. Default value: ""
+
+negative_prompt string
+Negative prompt for video generation. Default value: "letterboxing, borders, black bars, bright colors, overexposed, static, blurred details, subtitles, style, artwork, painting, picture, still, overall gray, worst quality, low quality, JPEG compression residue, ugly, incomplete, extra fingers, poorly drawn hands, poorly drawn faces, deformed, disfigured, malformed limbs, fused fingers, still picture, cluttered background, three legs, many people in the background, walking backwards"
+
+match_input_num_frames boolean
+If true, the number of frames in the generated video will match the number of frames in the input video. If false, the number of frames will be determined by the num_frames parameter. Default value: true
+
+num_frames integer
+Number of frames to generate. Must be between 81 to 241 (inclusive). Default value: 81
+
+match_input_frames_per_second boolean
+If true, the frames per second of the generated video will match the input video. If false, the frames per second will be determined by the frames_per_second parameter. Default value: true
+
+frames_per_second integer
+Frames per second of the generated video. Must be between 5 to 30. Ignored if match_input_frames_per_second is true. Default value: 16
+
+seed integer
+Random seed for reproducibility. If None, a random seed is chosen.
+
+resolution ResolutionEnum
+Resolution of the generated video (480p,580p, or 720p). Default value: "720p"
+
+Possible enum values: 480p, 580p, 720p
+
+aspect_ratio AspectRatioEnum
+Aspect ratio of the generated video (16:9 or 9:16). Default value: "auto"
+
+Possible enum values: auto, 16:9, 1:1, 9:16
+
+num_inference_steps integer
+Number of inference steps for sampling. Higher values give better quality but take longer. Default value: 30
+
+guidance_scale float
+Guidance scale for classifier-free guidance. Higher values encourage the model to generate images closely related to the text prompt. Default value: 5
+
+video_url string
+URL to the source video file. This video will be used as a reference for the reframe task.
+
+enable_safety_checker boolean
+If set to true, the safety checker will be enabled.
+
+enable_prompt_expansion boolean
+Whether to enable prompt expansion.
+
+acceleration AccelerationEnum
+Acceleration to use for inference. Options are 'none' or 'regular'. Accelerated inference will very slightly affect output, but will be significantly faster.
+
+Possible enum values: none, regular
+
+zoom_factor float
+Zoom factor for the video. When this value is greater than 0, the video will be zoomed in by this factor (in relation to the canvas size,) cutting off the edges of the video. A value of 0 means no zoom.
+
+temporal_downsample_factor integer
+Temporal downsample factor for the video. This is an integer value that determines how many frames to skip in the video. A value of 0 means no downsampling. For each downsample factor, one upsample factor will automatically be applied.
+
+interpolator_model InterpolatorModelEnum
+The model to use for frame interpolation. Options are 'rife' or 'film'. Default value: "film"
+
+Possible enum values: rife, film
+
+WanVACEDepthResponse
+#
+video File
+The generated depth video file.
+
+prompt string
+The prompt used for generation.
+
+seed integer
+The seed used for generation.
+
+WanVACEPoseRequest
+#
+prompt string
+The text prompt to guide video generation. For pose task, the prompt should describe the desired pose and action of the subject in the video.
+
+negative_prompt string
+Negative prompt for video generation. Default value: "letterboxing, borders, black bars, bright colors, overexposed, static, blurred details, subtitles, style, artwork, painting, picture, still, overall gray, worst quality, low quality, JPEG compression residue, ugly, incomplete, extra fingers, poorly drawn hands, poorly drawn faces, deformed, disfigured, malformed limbs, fused fingers, still picture, cluttered background, three legs, many people in the background, walking backwards"
+
+match_input_num_frames boolean
+If true, the number of frames in the generated video will match the number of frames in the input video. If false, the number of frames will be determined by the num_frames parameter.
+
+num_frames integer
+Number of frames to generate. Must be between 81 to 241 (inclusive). Default value: 81
+
+match_input_frames_per_second boolean
+If true, the frames per second of the generated video will match the input video. If false, the frames per second will be determined by the frames_per_second parameter.
+
+frames_per_second integer
+Frames per second of the generated video. Must be between 5 to 30. Ignored if match_input_frames_per_second is true. Default value: 16
+
+seed integer
+Random seed for reproducibility. If None, a random seed is chosen.
+
+resolution ResolutionEnum
+Resolution of the generated video (480p,580p, or 720p). Default value: "720p"
+
+Possible enum values: 480p, 580p, 720p
+
+aspect_ratio AspectRatioEnum
+Aspect ratio of the generated video (16:9 or 9:16). Default value: "auto"
+
+Possible enum values: auto, 16:9, 1:1, 9:16
+
+num_inference_steps integer
+Number of inference steps for sampling. Higher values give better quality but take longer. Default value: 30
+
+guidance_scale float
+Guidance scale for classifier-free guidance. Higher values encourage the model to generate images closely related to the text prompt. Default value: 5
+
+video_url string
+URL to the source video file. Required for pose task.
+
+enable_safety_checker boolean
+If set to true, the safety checker will be enabled.
+
+enable_prompt_expansion boolean
+Whether to enable prompt expansion.
+
+preprocess boolean
+Whether to preprocess the input video.
+
+acceleration AccelerationEnum
+Acceleration to use for inference. Options are 'none' or 'regular'. Accelerated inference will very slightly affect output, but will be significantly faster.
+
+Possible enum values: none, regular
+
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data
+
+WanVACEOutpaintingResponse
+#
+video File
+The generated outpainting video file.
+
+prompt string
+The prompt used for generation.
+
+seed integer
+The seed used for generation.
+
+WanVACEInpaintingResponse
+#
+video File
+The generated inpainting video file.
+
+prompt string
+The prompt used for generation.
+
+seed integer
+The seed used for generation.
+
+WanVACEInpaintingRequest
+#
+prompt string
+The text prompt to guide video generation.
+
+negative_prompt string
+Negative prompt for video generation. Default value: "letterboxing, borders, black bars, bright colors, overexposed, static, blurred details, subtitles, style, artwork, painting, picture, still, overall gray, worst quality, low quality, JPEG compression residue, ugly, incomplete, extra fingers, poorly drawn hands, poorly drawn faces, deformed, disfigured, malformed limbs, fused fingers, still picture, cluttered background, three legs, many people in the background, walking backwards"
+
+match_input_num_frames boolean
+If true, the number of frames in the generated video will match the number of frames in the input video. If false, the number of frames will be determined by the num_frames parameter.
+
+num_frames integer
+Number of frames to generate. Must be between 81 to 241 (inclusive). Default value: 81
+
+match_input_frames_per_second boolean
+If true, the frames per second of the generated video will match the input video. If false, the frames per second will be determined by the frames_per_second parameter.
+
+frames_per_second integer
+Frames per second of the generated video. Must be between 5 to 30. Ignored if match_input_frames_per_second is true. Default value: 16
+
+seed integer
+Random seed for reproducibility. If None, a random seed is chosen.
+
+resolution ResolutionEnum
+Resolution of the generated video (480p,580p, or 720p). Default value: "720p"
+
+Possible enum values: 480p, 580p, 720p
+
+aspect_ratio AspectRatioEnum
+Aspect ratio of the generated video (16:9 or 9:16). Default value: "auto"
+
+Possible enum values: auto, 16:9, 1:1, 9:16
+
+num_inference_steps integer
+Number of inference steps for sampling. Higher values give better quality but take longer. Default value: 30
+
+guidance_scale float
+Guidance scale for classifier-free guidance. Higher values encourage the model to generate images closely related to the text prompt. Default value: 5
+
+video_url string
+URL to the source video file. Required for inpainting.
+
+mask_video_url string
+URL to the source mask file. Required for inpainting.
+
+ref_image_urls list<string>
+Urls to source reference image. If provided, the model will use this image as reference.
+
+enable_safety_checker boolean
+If set to true, the safety checker will be enabled.
+
+enable_prompt_expansion boolean
+Whether to enable prompt expansion.
+
+acceleration AccelerationEnum
+Acceleration to use for inference. Options are 'none' or 'regular'. Accelerated inference will very slightly affect output, but will be significantly faster.
+
+Possible enum values: none, regular
+
+WanVACEDepthRequest
+#
+prompt string
+The text prompt to guide video generation.
+
+negative_prompt string
+Negative prompt for video generation. Default value: "letterboxing, borders, black bars, bright colors, overexposed, static, blurred details, subtitles, style, artwork, painting, picture, still, overall gray, worst quality, low quality, JPEG compression residue, ugly, incomplete, extra fingers, poorly drawn hands, poorly drawn faces, deformed, disfigured, malformed limbs, fused fingers, still picture, cluttered background, three legs, many people in the background, walking backwards"
+
+match_input_num_frames boolean
+If true, the number of frames in the generated video will match the number of frames in the input video. If false, the number of frames will be determined by the num_frames parameter.
+
+num_frames integer
+Number of frames to generate. Must be between 81 to 241 (inclusive). Default value: 81
+
+match_input_frames_per_second boolean
+If true, the frames per second of the generated video will match the input video. If false, the frames per second will be determined by the frames_per_second parameter.
+
+frames_per_second integer
+Frames per second of the generated video. Must be between 5 to 30. Ignored if match_input_frames_per_second is true. Default value: 16
+
+seed integer
+Random seed for reproducibility. If None, a random seed is chosen.
+
+resolution ResolutionEnum
+Resolution of the generated video (480p,580p, or 720p). Default value: "720p"
+
+Possible enum values: 480p, 580p, 720p
+
+aspect_ratio AspectRatioEnum
+Aspect ratio of the generated video (16:9 or 9:16). Default value: "auto"
+
+Possible enum values: auto, 16:9, 1:1, 9:16
+
+num_inference_steps integer
+Number of inference steps for sampling. Higher values give better quality but take longer. Default value: 30
+
+guidance_scale float
+Guidance scale for classifier-free guidance. Higher values encourage the model to generate images closely related to the text prompt. Default value: 5
+
+video_url string
+URL to the source video file. Required for depth task.
+
+enable_safety_checker boolean
+If set to true, the safety checker will be enabled.
+
+enable_prompt_expansion boolean
+Whether to enable prompt expansion.
+
+preprocess boolean
+Whether to preprocess the input video.
+
+acceleration AccelerationEnum
+Acceleration to use for inference. Options are 'none' or 'regular'. Accelerated inference will very slightly affect output, but will be significantly faster.
+
+Possible enum values: none, regular
+
+WanVACEPoseResponse
+#
+video File
+The generated pose video file.
+
+prompt string
+The prompt used for generation.
+
+seed integer
+The seed used for generation.
+
+WanVACEOutpaintingRequest
+#
+prompt string
+The text prompt to guide video generation.
+
+negative_prompt string
+Negative prompt for video generation. Default value: "letterboxing, borders, black bars, bright colors, overexposed, static, blurred details, subtitles, style, artwork, painting, picture, still, overall gray, worst quality, low quality, JPEG compression residue, ugly, incomplete, extra fingers, poorly drawn hands, poorly drawn faces, deformed, disfigured, malformed limbs, fused fingers, still picture, cluttered background, three legs, many people in the background, walking backwards"
+
+match_input_num_frames boolean
+If true, the number of frames in the generated video will match the number of frames in the input video. If false, the number of frames will be determined by the num_frames parameter.
+
+num_frames integer
+Number of frames to generate. Must be between 81 to 241 (inclusive). Default value: 81
+
+match_input_frames_per_second boolean
+If true, the frames per second of the generated video will match the input video. If false, the frames per second will be determined by the frames_per_second parameter.
+
+frames_per_second integer
+Frames per second of the generated video. Must be between 5 to 30. Ignored if match_input_frames_per_second is true. Default value: 16
+
+seed integer
+Random seed for reproducibility. If None, a random seed is chosen.
+
+resolution ResolutionEnum
+Resolution of the generated video (480p,580p, or 720p). Default value: "720p"
+
+Possible enum values: 480p, 580p, 720p
+
+aspect_ratio AspectRatioEnum
+Aspect ratio of the generated video (16:9 or 9:16). Default value: "auto"
+
+Possible enum values: auto, 16:9, 1:1, 9:16
+
+num_inference_steps integer
+Number of inference steps for sampling. Higher values give better quality but take longer. Default value: 30
+
+guidance_scale float
+Guidance scale for classifier-free guidance. Higher values encourage the model to generate images closely related to the text prompt. Default value: 5
+
+video_url string
+URL to the source video file. Required for outpainting.
+
+enable_safety_checker boolean
+If set to true, the safety checker will be enabled.
+
+enable_prompt_expansion boolean
+Whether to enable prompt expansion.
+
+acceleration AccelerationEnum
+Acceleration to use for inference. Options are 'none' or 'regular'. Accelerated inference will very slightly affect output, but will be significantly faster.
+
+Possible enum values: none, regular
+
+expand_left boolean
+Whether to expand the video to the left.
+
+expand_right boolean
+Whether to expand the video to the right.
+
+expand_top boolean
+Whether to expand the video to the top.
+
+expand_bottom boolean
+Whether to expand the video to the bottom.
+
+expand_ratio float
+Amount of expansion. This is a float value between 0 and 1, where 0.25 adds 25% to the original video size on the specified sides. Default value: 0.25
+
+
+3) fal-ai/ltx-video-13b-distilled/multiconditioning
+
+About
+Generate a video from a prompt and any number of images and video.
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/ltx-video-13b-distilled/multiconditioning", {
+  input: {
+    prompt: "A vibrant, abstract composition featuring a person with outstretched arms, rendered in a kaleidoscope of colors against a deep, dark background. The figure is composed of intricate, swirling patterns reminiscent of a mosaic, with hues of orange, yellow, blue, and green that evoke the style of artists such as Wassily Kandinsky or Bridget Riley. The camera zooms into the face striking portrait of a man, reimagined through the lens of old-school video-game graphics. The subject's face is rendered in a kaleidoscope of colors, with bold blues and reds set against a vibrant yellow backdrop. His dark hair is pulled back, framing his profile in a dramatic pose."
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/ltx-video-13b-distilled/multiconditioning", {
+  input: {
+    prompt: "A vibrant, abstract composition featuring a person with outstretched arms, rendered in a kaleidoscope of colors against a deep, dark background. The figure is composed of intricate, swirling patterns reminiscent of a mosaic, with hues of orange, yellow, blue, and green that evoke the style of artists such as Wassily Kandinsky or Bridget Riley. The camera zooms into the face striking portrait of a man, reimagined through the lens of old-school video-game graphics. The subject's face is rendered in a kaleidoscope of colors, with bold blues and reds set against a vibrant yellow backdrop. His dark hair is pulled back, framing his profile in a dramatic pose."
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/ltx-video-13b-distilled/multiconditioning", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/ltx-video-13b-distilled/multiconditioning", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+prompt string
+Text prompt to guide generation
+
+negative_prompt string
+Negative prompt for generation Default value: "worst quality, inconsistent motion, blurry, jittery, distorted"
+
+loras list<LoRAWeight>
+LoRA weights to use for generation
+
+resolution ResolutionEnum
+Resolution of the generated video (480p or 720p). Default value: "720p"
+
+Possible enum values: 480p, 720p
+
+aspect_ratio AspectRatioEnum
+The aspect ratio of the video. Default value: "auto"
+
+Possible enum values: 9:16, 1:1, 16:9, auto
+
+seed integer
+Random seed for generation
+
+num_frames integer
+The number of frames in the video. Default value: 121
+
+first_pass_num_inference_steps integer
+Number of inference steps during the first pass. Default value: 8
+
+first_pass_skip_final_steps integer
+Number of inference steps to skip in the final steps of the first pass. By skipping some steps at the end, the first pass can focus on larger changes instead of smaller details. Default value: 1
+
+second_pass_num_inference_steps integer
+Number of inference steps during the second pass. Default value: 8
+
+second_pass_skip_initial_steps integer
+The number of inference steps to skip in the initial steps of the second pass. By skipping some steps at the beginning, the second pass can focus on smaller details instead of larger changes. Default value: 5
+
+frame_rate integer
+The frame rate of the video. Default value: 30
+
+expand_prompt boolean
+Whether to expand the prompt using a language model.
+
+reverse_video boolean
+Whether to reverse the video.
+
+enable_safety_checker boolean
+Whether to enable the safety checker. Default value: true
+
+constant_rate_factor integer
+The constant rate factor (CRF) to compress input media with. Compressed input media more closely matches the model's training data, which can improve motion quality. Default value: 35
+
+images list<ImageConditioningInput>
+URL of images to use as conditioning
+
+videos list<VideoConditioningInput>
+Videos to use as conditioning
+
+
+{
+  "prompt": "A vibrant, abstract composition featuring a person with outstretched arms, rendered in a kaleidoscope of colors against a deep, dark background. The figure is composed of intricate, swirling patterns reminiscent of a mosaic, with hues of orange, yellow, blue, and green that evoke the style of artists such as Wassily Kandinsky or Bridget Riley. The camera zooms into the face striking portrait of a man, reimagined through the lens of old-school video-game graphics. The subject's face is rendered in a kaleidoscope of colors, with bold blues and reds set against a vibrant yellow backdrop. His dark hair is pulled back, framing his profile in a dramatic pose.",
+  "negative_prompt": "worst quality, inconsistent motion, blurry, jittery, distorted",
+  "loras": [],
+  "resolution": "720p",
+  "aspect_ratio": "auto",
+  "num_frames": 121,
+  "first_pass_num_inference_steps": 8,
+  "first_pass_skip_final_steps": 1,
+  "second_pass_num_inference_steps": 8,
+  "second_pass_skip_initial_steps": 5,
+  "frame_rate": 30,
+  "expand_prompt": false,
+  "reverse_video": false,
+  "enable_safety_checker": true,
+  "constant_rate_factor": 35,
+  "images": [
+    {
+      "strength": 1,
+      "start_frame_num": 0,
+      "image_url": "https://storage.googleapis.com/falserverless/model_tests/ltx/NswO1P8sCLzrh1WefqQFK_9a6bdbfa54b944c9a770338159a113fd.jpg"
+    },
+    {
+      "strength": 1,
+      "start_frame_num": 120,
+      "image_url": "https://storage.googleapis.com/falserverless/model_tests/ltx/YAPOGvmS2tM_Krdp7q6-d_267c97e017c34f679844a4477dfcec38.jpg"
+    }
+  ],
+  "videos": []
+}
+Output
+#
+video File
+The generated video file.
+
+prompt string
+The prompt used for generation.
+
+seed integer
+The seed used for generation.
+
+
+{
+  "video": {
+    "url": "https://storage.googleapis.com/falserverless/example_outputs/ltxv-multiconditioning-output.mp4"
+  },
+  "prompt": "A vibrant, abstract composition featuring a person with outstretched arms, rendered in a kaleidoscope of colors against a deep, dark background. The figure is composed of intricate, swirling patterns reminiscent of a mosaic, with hues of orange, yellow, blue, and green that evoke the style of artists such as Wassily Kandinsky or Bridget Riley. The camera zooms into the face striking portrait of a man, reimagined through the lens of old-school video-game graphics. The subject's face is rendered in a kaleidoscope of colors, with bold blues and reds set against a vibrant yellow backdrop. His dark hair is pulled back, framing his profile in a dramatic pose."
+}
+Other types
+#
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data
+
+LoRAWeight
+#
+path string
+URL or path to the LoRA weights.
+
+weight_name string
+Name of the LoRA weight. Only used if path is a HuggingFace repository, and is only required when the repository contains multiple LoRA weights.
+
+scale float
+Scale of the LoRA weight. This is a multiplier applied to the LoRA weight when loading it. Default value: 1
+
+
+4)fal-ai/magi/extend-video
+
+About
+Generate a video extension.
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/magi/extend-video", {
+  input: {
+    prompt: "",
+    video_url: "https://v3.fal.media/files/zebra/w4T087gvzG5LMGipMpPCO_pour-2s.mp4"
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/magi/extend-video", {
+  input: {
+    prompt: "",
+    video_url: "https://v3.fal.media/files/zebra/w4T087gvzG5LMGipMpPCO_pour-2s.mp4"
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/magi/extend-video", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/magi/extend-video", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+prompt string
+The text prompt to guide video generation.
+
+video_url string
+URL of the input video to represent the beginning of the video. If the input video does not match the chosen aspect ratio, it is resized and center cropped.
+
+num_frames integer
+Number of frames to generate. Must be between 96 and 192 (inclusive). Each additional 24 frames beyond 96 incurs an additional billing unit. Default value: 96
+
+start_frame integer
+The frame to begin the generation from, with the remaining frames will be treated as the prefix video. The final video will contain the frames up until this number unchanged, followed by the generated frames. The default start frame is 32 frames before the end of the video, which gives optimal results.
+
+seed integer
+Random seed for reproducibility. If None, a random seed is chosen.
+
+resolution ResolutionEnum
+Resolution of the generated video (480p or 720p). 480p is 0.5 billing units, and 720p is 1 billing unit. Default value: "720p"
+
+Possible enum values: 480p, 720p
+
+num_inference_steps NumInferenceStepsEnum
+Number of inference steps for sampling. Higher values give better quality but take longer. Default value: "16"
+
+Possible enum values: 4, 8, 16, 32, 64
+
+enable_safety_checker boolean
+If set to true, the safety checker will be enabled. Default value: true
+
+aspect_ratio AspectRatioEnum
+Aspect ratio of the generated video. If 'auto', the aspect ratio will be determined automatically based on the input image. Default value: "auto"
+
+Possible enum values: auto, 16:9, 9:16, 1:1
+
+
+{
+  "prompt": "",
+  "video_url": "https://v3.fal.media/files/zebra/w4T087gvzG5LMGipMpPCO_pour-2s.mp4",
+  "num_frames": 96,
+  "resolution": "720p",
+  "num_inference_steps": 16,
+  "enable_safety_checker": true,
+  "aspect_ratio": "auto"
+}
+Output
+#
+video File
+The generated video file.
+
+seed integer
+The seed used for generation.
+
+
+{
+  "video": {
+    "url": "https://v3.fal.media/files/zebra/yVrs367uHeCqrBGY-VICa_3b064421-fe96-4ccb-a3ea-4f37b54e682e.mp4"
+  }
+}
+Other types
+#
+MagiResponse
+#
+video File
+The generated video file.
+
+seed integer
+The seed used for generation.
+
+MagiImageToVideoRequest
+#
+prompt string
+The text prompt to guide video generation.
+
+image_url string
+URL of the input image to represent the first frame of the video. If the input image does not match the chosen aspect ratio, it is resized and center cropped.
+
+num_frames integer
+Number of frames to generate. Must be between 96 and 192 (inclusive). Each additional 24 frames beyond 96 incurs an additional billing unit. Default value: 96
+
+seed integer
+Random seed for reproducibility. If None, a random seed is chosen.
+
+resolution ResolutionEnum
+Resolution of the generated video (480p or 720p). 480p is 0.5 billing units, and 720p is 1 billing unit. Default value: "720p"
+
+Possible enum values: 480p, 720p
+
+num_inference_steps NumInferenceStepsEnum
+Number of inference steps for sampling. Higher values give better quality but take longer. Default value: "16"
+
+Possible enum values: 4, 8, 16, 32, 64
+
+enable_safety_checker boolean
+If set to true, the safety checker will be enabled. Default value: true
+
+aspect_ratio AspectRatioEnum
+Aspect ratio of the generated video. If 'auto', the aspect ratio will be determined automatically based on the input image. Default value: "auto"
+
+Possible enum values: auto, 16:9, 9:16, 1:1
+
+MagiTextToVideoRequest
+#
+prompt string
+The text prompt to guide video generation.
+
+num_frames integer
+Number of frames to generate. Must be between 96 and 192 (inclusive). Each additional 24 frames beyond 96 incurs an additional billing unit. Default value: 96
+
+seed integer
+Random seed for reproducibility. If None, a random seed is chosen.
+
+resolution ResolutionEnum
+Resolution of the generated video (480p or 720p). 480p is 0.5 billing units, and 720p is 1 billing unit. Default value: "720p"
+
+Possible enum values: 480p, 720p
+
+num_inference_steps NumInferenceStepsEnum
+Number of inference steps for sampling. Higher values give better quality but take longer. Default value: "16"
+
+Possible enum values: 4, 8, 16, 32, 64
+
+enable_safety_checker boolean
+If set to true, the safety checker will be enabled. Default value: true
+
+aspect_ratio AspectRatioEnum
+Aspect ratio of the generated video. If 'auto', the aspect ratio will be determined automatically based on the input image. Default value: "auto"
+
+Possible enum values: auto, 16:9, 9:16, 1:1
+
+MagiImageToVideoResponse
+#
+video File
+The generated video file.
+
+seed integer
+The seed used for generation.
+
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data
+
+5)fal-ai/pixverse/lipsync
+
+About
+Create a lipsync video by combining a video with audio.
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/pixverse/lipsync", {
+  input: {
+    video_url: "https://v3.fal.media/files/penguin/T-ONORYMYLoEOB9lXryA2_IKEy3yAyi1evJGBAkXGZx_output.mp4"
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/pixverse/lipsync", {
+  input: {
+    video_url: "https://v3.fal.media/files/penguin/T-ONORYMYLoEOB9lXryA2_IKEy3yAyi1evJGBAkXGZx_output.mp4"
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/pixverse/lipsync", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/pixverse/lipsync", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+video_url string
+URL of the input video
+
+audio_url string
+URL of the input audio. If not provided, TTS will be used.
+
+voice_id VoiceIdEnum
+Voice to use for TTS when audio_url is not provided Default value: "Auto"
+
+Possible enum values: Emily, James, Isabella, Liam, Chloe, Adrian, Harper, Ava, Sophia, Julia, Mason, Jack, Oliver, Ethan, Auto
+
+text string
+Text content for TTS when audio_url is not provided
+
+
+{
+  "video_url": "https://v3.fal.media/files/penguin/T-ONORYMYLoEOB9lXryA2_IKEy3yAyi1evJGBAkXGZx_output.mp4",
+  "audio_url": "https://v3.fal.media/files/monkey/k4iyN8bJZWwJXMKH-pO9r_speech.mp3",
+  "voice_id": "Auto",
+  "text": "Hello, this is a test message."
+}
+Output
+#
+video File
+The generated video
+
+
+{
+  "video": {
+    "file_size": 1732359,
+    "file_name": "output.mp4",
+    "content_type": "video/mp4",
+    "url": "https://v3.fal.media/files/penguin/hsR_KXBJjuF3IIVYIIDA2_output.mp4"
+  }
+}
+Other types
+#
+ExtendRequest
+#
+video_url string
+URL of the input video to extend
+
+prompt string
+Prompt describing how to extend the video
+
+negative_prompt string
+Negative prompt to be used for the generation Default value: ""
+
+style StyleEnum
+The style of the extended video
+
+Possible enum values: anime, 3d_animation, day, cyberpunk, comic
+
+resolution ResolutionEnum
+The resolution of the generated video Default value: "720p"
+
+Possible enum values: 360p, 540p, 720p, 1080p
+
+duration DurationEnum
+The duration of the generated video in seconds. 1080p videos are limited to 5 seconds Default value: "5"
+
+Possible enum values: 5, 8
+
+model ModelEnum
+The model version to use for generation Default value: "v4.5"
+
+Possible enum values: v3.5, v4, v4.5
+
+seed integer
+Random seed for generation
+
+TextToVideoRequest
+#
+prompt string
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video Default value: "16:9"
+
+Possible enum values: 16:9, 4:3, 1:1, 3:4, 9:16
+
+resolution ResolutionEnum
+The resolution of the generated video Default value: "720p"
+
+Possible enum values: 360p, 540p, 720p, 1080p
+
+duration DurationEnum
+The duration of the generated video in seconds. 8s videos cost double. 1080p videos are limited to 5 seconds Default value: "5"
+
+Possible enum values: 5, 8
+
+negative_prompt string
+Negative prompt to be used for the generation Default value: ""
+
+style StyleEnum
+The style of the generated video
+
+Possible enum values: anime, 3d_animation, clay, comic, cyberpunk
+
+seed integer
+The same seed and the same prompt given to the same version of the model will output the same video every time.
+
+I2VOutputV4
+#
+video File
+The generated video
+
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data
+
+FastTextToVideoRequest
+#
+prompt string
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video Default value: "16:9"
+
+Possible enum values: 16:9, 4:3, 1:1, 3:4, 9:16
+
+resolution ResolutionEnum
+The resolution of the generated video Default value: "720p"
+
+Possible enum values: 360p, 540p, 720p
+
+negative_prompt string
+Negative prompt to be used for the generation Default value: ""
+
+style StyleEnum
+The style of the generated video
+
+Possible enum values: anime, 3d_animation, clay, comic, cyberpunk
+
+seed integer
+The same seed and the same prompt given to the same version of the model will output the same video every time.
+
+ImageToVideoRequest
+#
+prompt string
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video Default value: "16:9"
+
+Possible enum values: 16:9, 4:3, 1:1, 3:4, 9:16
+
+resolution ResolutionEnum
+The resolution of the generated video Default value: "720p"
+
+Possible enum values: 360p, 540p, 720p, 1080p
+
+duration DurationEnum
+The duration of the generated video in seconds. 8s videos cost double. 1080p videos are limited to 5 seconds Default value: "5"
+
+Possible enum values: 5, 8
+
+negative_prompt string
+Negative prompt to be used for the generation Default value: ""
+
+style StyleEnum
+The style of the generated video
+
+Possible enum values: anime, 3d_animation, clay, comic, cyberpunk
+
+seed integer
+The same seed and the same prompt given to the same version of the model will output the same video every time.
+
+image_url string
+URL of the image to use as the first frame
+
+TransitionRequest
+#
+prompt string
+The prompt for the transition
+
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video Default value: "16:9"
+
+Possible enum values: 16:9, 4:3, 1:1, 3:4, 9:16
+
+resolution ResolutionEnum
+The resolution of the generated video Default value: "720p"
+
+Possible enum values: 360p, 540p, 720p, 1080p
+
+duration DurationEnum
+The duration of the generated video in seconds Default value: "5"
+
+Possible enum values: 5, 8
+
+negative_prompt string
+Negative prompt to be used for the generation Default value: ""
+
+style StyleEnum
+The style of the generated video
+
+Possible enum values: anime, 3d_animation, clay, comic, cyberpunk
+
+seed integer
+The same seed and the same prompt given to the same version of the model will output the same video every time.
+
+first_image_url string
+URL of the image to use as the first frame
+
+last_image_url string
+URL of the image to use as the last frame
+
+FastImageToVideoRequestV4
+#
+prompt string
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video Default value: "16:9"
+
+Possible enum values: 16:9, 4:3, 1:1, 3:4, 9:16
+
+resolution ResolutionEnum
+The resolution of the generated video Default value: "720p"
+
+Possible enum values: 360p, 540p, 720p
+
+negative_prompt string
+Negative prompt to be used for the generation Default value: ""
+
+style StyleEnum
+The style of the generated video
+
+Possible enum values: anime, 3d_animation, clay, comic, cyberpunk
+
+seed integer
+The same seed and the same prompt given to the same version of the model will output the same video every time.
+
+image_url string
+URL of the image to use as the first frame
+
+ImageToVideoRequestV4
+#
+prompt string
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video Default value: "16:9"
+
+Possible enum values: 16:9, 4:3, 1:1, 3:4, 9:16
+
+resolution ResolutionEnum
+The resolution of the generated video Default value: "720p"
+
+Possible enum values: 360p, 540p, 720p, 1080p
+
+duration DurationEnum
+The duration of the generated video in seconds. 8s videos cost double. 1080p videos are limited to 5 seconds Default value: "5"
+
+Possible enum values: 5, 8
+
+negative_prompt string
+Negative prompt to be used for the generation Default value: ""
+
+style StyleEnum
+The style of the generated video
+
+Possible enum values: anime, 3d_animation, clay, comic, cyberpunk
+
+seed integer
+The same seed and the same prompt given to the same version of the model will output the same video every time.
+
+image_url string
+URL of the image to use as the first frame
+
+VideoOutputV4
+#
+video File
+The generated video
+
+SoundEffectRequest
+#
+video_url string
+URL of the input video to add sound effects to
+
+original_sound_switch boolean
+Whether to keep the original audio from the video
+
+prompt string
+Description of the sound effect to generate. If empty, a random sound effect will be generated Default value: ""
+
+FastImageToVideoRequest
+#
+prompt string
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video Default value: "16:9"
+
+Possible enum values: 16:9, 4:3, 1:1, 3:4, 9:16
+
+resolution ResolutionEnum
+The resolution of the generated video Default value: "720p"
+
+Possible enum values: 360p, 540p, 720p
+
+negative_prompt string
+Negative prompt to be used for the generation Default value: ""
+
+style StyleEnum
+The style of the generated video
+
+Possible enum values: anime, 3d_animation, clay, comic, cyberpunk
+
+seed integer
+The same seed and the same prompt given to the same version of the model will output the same video every time.
+
+image_url string
+URL of the image to use as the first frame
+
+FastExtendRequest
+#
+video_url string
+URL of the input video to extend
+
+prompt string
+Prompt describing how to extend the video
+
+negative_prompt string
+Negative prompt to be used for the generation Default value: ""
+
+style StyleEnum
+The style of the extended video
+
+Possible enum values: anime, 3d_animation, day, cyberpunk, comic
+
+resolution ResolutionEnum
+The resolution of the generated video. Fast mode doesn't support 1080p Default value: "720p"
+
+Possible enum values: 360p, 540p, 720p
+
+model ModelEnum
+The model version to use for generation Default value: "v4.5"
+
+Possible enum values: v3.5, v4, v4.5
+
+seed integer
+Random seed for generation
+
+6)fal-ai/ffmpeg-api/merge-audio-video
+
+About
+Combine
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/ffmpeg-api/merge-audio-video", {
+  input: {
+    video_url: "https://storage.googleapis.com/falserverless/example_inputs/ffmpeg-video.mp4",
+    audio_url: "https://storage.googleapis.com/falserverless/example_inputs/ffmpeg-audio.wav"
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/ffmpeg-api/merge-audio-video", {
+  input: {
+    video_url: "https://storage.googleapis.com/falserverless/example_inputs/ffmpeg-video.mp4",
+    audio_url: "https://storage.googleapis.com/falserverless/example_inputs/ffmpeg-audio.wav"
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/ffmpeg-api/merge-audio-video", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/ffmpeg-api/merge-audio-video", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+video_url string
+URL of the video file to use as the video track
+
+audio_url string
+URL of the audio file to use as the audio track
+
+start_offset float
+Offset in seconds for when the audio should start relative to the video
+
+
+{
+  "video_url": "https://storage.googleapis.com/falserverless/example_inputs/ffmpeg-video.mp4",
+  "audio_url": "https://storage.googleapis.com/falserverless/example_inputs/ffmpeg-audio.wav"
+}
+Output
+#
+video File
+Output video with merged audio.
+
+
+{
+  "video": {
+    "url": "",
+    "content_type": "image/png",
+    "file_name": "z9RV14K95DvU.png",
+    "file_size": 4404019
+  }
+}
+Other types
+#
+AudioTrack
+#
+codec string
+Audio codec used (e.g., 'aac', 'mp3')
+
+channels integer
+Number of audio channels
+
+sample_rate integer
+Audio sample rate in Hz
+
+bitrate integer
+Audio bitrate in bits per second
+
+Track
+#
+id string
+Unique identifier for the track
+
+type string
+Type of track ('video' or 'audio')
+
+keyframes list<Keyframe>
+List of keyframes that make up this track
+
+Audio
+#
+media_type string
+Type of media (always 'audio') Default value: "audio"
+
+url string
+URL where the media file can be accessed
+
+content_type string
+MIME type of the media file
+
+file_name string
+Original filename of the media
+
+file_size integer
+Size of the file in bytes
+
+duration float
+Duration of the media in seconds
+
+bitrate integer
+Overall bitrate of the media in bits per second
+
+codec string
+Codec used to encode the media
+
+container string
+Container format of the media file (e.g., 'mp4', 'mov')
+
+channels integer
+Number of audio channels
+
+sample_rate integer
+Audio sample rate in Hz
+
+Keyframe
+#
+timestamp float
+The timestamp in milliseconds where this keyframe starts
+
+duration float
+The duration in milliseconds of this keyframe
+
+url string
+The URL where this keyframe's media file can be accessed
+
+LoudnormSummary
+#
+input_integrated float
+Input integrated loudness in LUFS
+
+input_true_peak float
+Input true peak in dBTP
+
+input_lra float
+Input loudness range in LU
+
+input_threshold float
+Input threshold in LUFS
+
+output_integrated float
+Output integrated loudness in LUFS
+
+output_true_peak float
+Output true peak in dBTP
+
+output_lra float
+Output loudness range in LU
+
+output_threshold float
+Output threshold in LUFS
+
+normalization_type string
+Type of normalization applied (Dynamic/Linear)
+
+target_offset float
+Target offset in LU
+
+Video
+#
+media_type string
+Type of media (always 'video') Default value: "video"
+
+url string
+URL where the media file can be accessed
+
+content_type string
+MIME type of the media file
+
+file_name string
+Original filename of the media
+
+file_size integer
+Size of the file in bytes
+
+duration float
+Duration of the media in seconds
+
+bitrate integer
+Overall bitrate of the media in bits per second
+
+codec string
+Codec used to encode the media
+
+container string
+Container format of the media file (e.g., 'mp4', 'mov')
+
+fps integer
+Frames per second
+
+frame_count integer
+Total number of frames in the video
+
+timebase string
+Time base used for frame timestamps
+
+resolution Resolution
+Video resolution information
+
+format VideoFormat
+Detailed video format information
+
+audio AudioTrack
+Audio track information if video has audio
+
+start_frame_url string
+URL of the extracted first frame
+
+end_frame_url string
+URL of the extracted last frame
+
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+Image
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+width integer
+The width of the image in pixels.
+
+height integer
+The height of the image in pixels.
+
+Resolution
+#
+aspect_ratio string
+Display aspect ratio (e.g., '16:9')
+
+width integer
+Width of the video in pixels
+
+height integer
+Height of the video in pixels
+
+VideoFormat
+#
+container string
+Container format of the video
+
+video_codec string
+Video codec used (e.g., 'h264')
+
+profile string
+Codec profile (e.g., 'main', 'high')
+
+level float
+Codec level (e.g., 4.1)
+
+pixel_format string
+Pixel format used (e.g., 'yuv420p')
+
+bitrate integer
+Video bitrate in bits per second
+
+7)fal-ai/pixverse/extend/fast
+
+About
+Extend a video by generating new content based on its ending using fast mode.
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/pixverse/extend/fast", {
+  input: {
+    video_url: "https://v3.fal.media/files/rabbit/88-jI3VWXU4Q8kSNrWo3c_output.mp4",
+    prompt: "A kid is talking into camera"
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/pixverse/extend/fast", {
+  input: {
+    video_url: "https://v3.fal.media/files/rabbit/88-jI3VWXU4Q8kSNrWo3c_output.mp4",
+    prompt: "A kid is talking into camera"
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/pixverse/extend/fast", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/pixverse/extend/fast", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+video_url string
+URL of the input video to extend
+
+prompt string
+Prompt describing how to extend the video
+
+negative_prompt string
+Negative prompt to be used for the generation Default value: ""
+
+style StyleEnum
+The style of the extended video
+
+Possible enum values: anime, 3d_animation, day, cyberpunk, comic
+
+resolution ResolutionEnum
+The resolution of the generated video. Fast mode doesn't support 1080p Default value: "720p"
+
+Possible enum values: 360p, 540p, 720p
+
+model ModelEnum
+The model version to use for generation Default value: "v4.5"
+
+Possible enum values: v3.5, v4, v4.5
+
+seed integer
+Random seed for generation
+
+
+{
+  "video_url": "https://v3.fal.media/files/rabbit/88-jI3VWXU4Q8kSNrWo3c_output.mp4",
+  "prompt": "A kid is talking into camera",
+  "resolution": "720p",
+  "model": "v4.5"
+}
+Output
+#
+video File
+The extended video
+
+
+{
+  "video": {
+    "file_size": 1163040,
+    "file_name": "output.mp4",
+    "content_type": "video/mp4",
+    "url": "https://v3.fal.media/files/rabbit/88-jI3VWXU4Q8kSNrWo3c_output.mp4"
+  }
+}
+Other types
+#
+ExtendRequest
+#
+video_url string
+URL of the input video to extend
+
+prompt string
+Prompt describing how to extend the video
+
+negative_prompt string
+Negative prompt to be used for the generation Default value: ""
+
+style StyleEnum
+The style of the extended video
+
+Possible enum values: anime, 3d_animation, day, cyberpunk, comic
+
+resolution ResolutionEnum
+The resolution of the generated video Default value: "720p"
+
+Possible enum values: 360p, 540p, 720p, 1080p
+
+duration DurationEnum
+The duration of the generated video in seconds. 1080p videos are limited to 5 seconds Default value: "5"
+
+Possible enum values: 5, 8
+
+model ModelEnum
+The model version to use for generation Default value: "v4.5"
+
+Possible enum values: v3.5, v4, v4.5
+
+seed integer
+Random seed for generation
+
+TextToVideoRequest
+#
+prompt string
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video Default value: "16:9"
+
+Possible enum values: 16:9, 4:3, 1:1, 3:4, 9:16
+
+resolution ResolutionEnum
+The resolution of the generated video Default value: "720p"
+
+Possible enum values: 360p, 540p, 720p, 1080p
+
+duration DurationEnum
+The duration of the generated video in seconds. 8s videos cost double. 1080p videos are limited to 5 seconds Default value: "5"
+
+Possible enum values: 5, 8
+
+negative_prompt string
+Negative prompt to be used for the generation Default value: ""
+
+style StyleEnum
+The style of the generated video
+
+Possible enum values: anime, 3d_animation, clay, comic, cyberpunk
+
+seed integer
+The same seed and the same prompt given to the same version of the model will output the same video every time.
+
+I2VOutputV4
+#
+video File
+The generated video
+
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data
+
+FastTextToVideoRequest
+#
+prompt string
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video Default value: "16:9"
+
+Possible enum values: 16:9, 4:3, 1:1, 3:4, 9:16
+
+resolution ResolutionEnum
+The resolution of the generated video Default value: "720p"
+
+Possible enum values: 360p, 540p, 720p
+
+negative_prompt string
+Negative prompt to be used for the generation Default value: ""
+
+style StyleEnum
+The style of the generated video
+
+Possible enum values: anime, 3d_animation, clay, comic, cyberpunk
+
+seed integer
+The same seed and the same prompt given to the same version of the model will output the same video every time.
+
+ImageToVideoRequest
+#
+prompt string
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video Default value: "16:9"
+
+Possible enum values: 16:9, 4:3, 1:1, 3:4, 9:16
+
+resolution ResolutionEnum
+The resolution of the generated video Default value: "720p"
+
+Possible enum values: 360p, 540p, 720p, 1080p
+
+duration DurationEnum
+The duration of the generated video in seconds. 8s videos cost double. 1080p videos are limited to 5 seconds Default value: "5"
+
+Possible enum values: 5, 8
+
+negative_prompt string
+Negative prompt to be used for the generation Default value: ""
+
+style StyleEnum
+The style of the generated video
+
+Possible enum values: anime, 3d_animation, clay, comic, cyberpunk
+
+seed integer
+The same seed and the same prompt given to the same version of the model will output the same video every time.
+
+image_url string
+URL of the image to use as the first frame
+
+TransitionRequest
+#
+prompt string
+The prompt for the transition
+
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video Default value: "16:9"
+
+Possible enum values: 16:9, 4:3, 1:1, 3:4, 9:16
+
+resolution ResolutionEnum
+The resolution of the generated video Default value: "720p"
+
+Possible enum values: 360p, 540p, 720p, 1080p
+
+duration DurationEnum
+The duration of the generated video in seconds Default value: "5"
+
+Possible enum values: 5, 8
+
+negative_prompt string
+Negative prompt to be used for the generation Default value: ""
+
+style StyleEnum
+The style of the generated video
+
+Possible enum values: anime, 3d_animation, clay, comic, cyberpunk
+
+seed integer
+The same seed and the same prompt given to the same version of the model will output the same video every time.
+
+first_image_url string
+URL of the image to use as the first frame
+
+last_image_url string
+URL of the image to use as the last frame
+
+FastImageToVideoRequestV4
+#
+prompt string
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video Default value: "16:9"
+
+Possible enum values: 16:9, 4:3, 1:1, 3:4, 9:16
+
+resolution ResolutionEnum
+The resolution of the generated video Default value: "720p"
+
+Possible enum values: 360p, 540p, 720p
+
+negative_prompt string
+Negative prompt to be used for the generation Default value: ""
+
+style StyleEnum
+The style of the generated video
+
+Possible enum values: anime, 3d_animation, clay, comic, cyberpunk
+
+seed integer
+The same seed and the same prompt given to the same version of the model will output the same video every time.
+
+image_url string
+URL of the image to use as the first frame
+
+ImageToVideoRequestV4
+#
+prompt string
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video Default value: "16:9"
+
+Possible enum values: 16:9, 4:3, 1:1, 3:4, 9:16
+
+resolution ResolutionEnum
+The resolution of the generated video Default value: "720p"
+
+Possible enum values: 360p, 540p, 720p, 1080p
+
+duration DurationEnum
+The duration of the generated video in seconds. 8s videos cost double. 1080p videos are limited to 5 seconds Default value: "5"
+
+Possible enum values: 5, 8
+
+negative_prompt string
+Negative prompt to be used for the generation Default value: ""
+
+style StyleEnum
+The style of the generated video
+
+Possible enum values: anime, 3d_animation, clay, comic, cyberpunk
+
+seed integer
+The same seed and the same prompt given to the same version of the model will output the same video every time.
+
+image_url string
+URL of the image to use as the first frame
+
+VideoOutputV4
+#
+video File
+The generated video
+
+SoundEffectRequest
+#
+video_url string
+URL of the input video to add sound effects to
+
+original_sound_switch boolean
+Whether to keep the original audio from the video
+
+prompt string
+Description of the sound effect to generate. If empty, a random sound effect will be generated Default value: ""
+
+LipsyncRequest
+#
+video_url string
+URL of the input video
+
+audio_url string
+URL of the input audio. If not provided, TTS will be used.
+
+voice_id VoiceIdEnum
+Voice to use for TTS when audio_url is not provided Default value: "Auto"
+
+Possible enum values: Emily, James, Isabella, Liam, Chloe, Adrian, Harper, Ava, Sophia, Julia, Mason, Jack, Oliver, Ethan, Auto
+
+text string
+Text content for TTS when audio_url is not provided
+
+FastImageToVideoRequest
+#
+prompt string
+aspect_ratio AspectRatioEnum
+The aspect ratio of the generated video Default value: "16:9"
+
+Possible enum values: 16:9, 4:3, 1:1, 3:4, 9:16
+
+resolution ResolutionEnum
+The resolution of the generated video Default value: "720p"
+
+Possible enum values: 360p, 540p, 720p
+
+negative_prompt string
+Negative prompt to be used for the generation Default value: ""
+
+style StyleEnum
+The style of the generated video
+
+Possible enum values: anime, 3d_animation, clay, comic, cyberpunk
+
+seed integer
+The same seed and the same prompt given to the same version of the model will output the same video every time.
+
+image_url string
+URL of the image to use as the first frame
+
+8)fal-ai/fast-animatediff/turbo/video-to-video
+
+About
+Turbo Video To Video
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/fast-animatediff/turbo/video-to-video", {
+  input: {
+    video_url: "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/diffusers/animatediff-vid2vid-input-2.gif",
+    prompt: "closeup of tony stark, robert downey jr, fireworks, high quality, ultra HD"
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/fast-animatediff/turbo/video-to-video", {
+  input: {
+    video_url: "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/diffusers/animatediff-vid2vid-input-2.gif",
+    prompt: "closeup of tony stark, robert downey jr, fireworks, high quality, ultra HD"
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/fast-animatediff/turbo/video-to-video", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/fast-animatediff/turbo/video-to-video", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+video_url string
+URL of the video.
+
+first_n_seconds integer
+The first N number of seconds of video to animate. Default value: 3
+
+prompt string
+The prompt to use for generating the image. Be as descriptive as possible for best results.
+
+negative_prompt string
+The negative prompt to use. Use it to address details that you don't want in the image. This could be colors, objects, scenery and even the small details (e.g. moustache, blurry, low resolution). Default value: "(bad quality, worst quality:1.2), ugly faces, bad anime"
+
+num_inference_steps integer
+The number of inference steps to perform. 4-12 is recommended for turbo mode. Default value: 8
+
+strength float
+The strength of the input video in the final output. Default value: 0.7
+
+guidance_scale float
+The CFG (Classifier Free Guidance) scale is a measure of how close you want the model to stick to your prompt when looking for a related image to show you. Default value: 1
+
+seed integer
+The same seed and the same prompt given to the same version of Stable Diffusion will output the same image every time.
+
+fps integer
+Number of frames per second to extract from the video. Default value: 8
+
+motions list<Enum>
+The motions to apply to the video.
+
+
+{
+  "video_url": "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/diffusers/animatediff-vid2vid-input-2.gif",
+  "first_n_seconds": 3,
+  "prompt": "closeup of tony stark, robert downey jr, fireworks, high quality, ultra HD",
+  "negative_prompt": "(bad quality, worst quality:1.2), ugly faces, bad anime",
+  "num_inference_steps": 8,
+  "strength": 0.7,
+  "guidance_scale": 1,
+  "fps": 8
+}
+Output
+#
+video File
+Generated video file.
+
+seed integer
+Seed used for generating the video.
+
+
+{
+  "video": {
+    "url": "https://fal-cdn.batuhan-941.workers.dev/files/koala/5Cb_6P_s9wW8f8-g9c4yj.mp4"
+  }
+}
+Other types
+#
+ImageSize
+#
+width integer
+The width of the generated image. Default value: 512
+
+height integer
+The height of the generated image. Default value: 512
+
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+9)fal-ai/video-upscaler
+
+About
+Run
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/video-upscaler", {
+  input: {
+    video_url: "https://storage.googleapis.com/falserverless/videos/_o3VmzjOytBwRjCVPFX6i_output.mp4"
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/video-upscaler", {
+  input: {
+    video_url: "https://storage.googleapis.com/falserverless/videos/_o3VmzjOytBwRjCVPFX6i_output.mp4"
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/video-upscaler", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/video-upscaler", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+video_url string
+The URL of the video to upscale
+
+scale float
+The scale factor Default value: 2
+
+
+{
+  "video_url": "https://storage.googleapis.com/falserverless/videos/_o3VmzjOytBwRjCVPFX6i_output.mp4",
+  "scale": 2
+}
+Output
+#
+video File
+The stitched video
+
+
+{
+  "video": {
+    "content_type": "video/mp4",
+    "url": "https://storage.googleapis.com/falserverless/videos/h0jgPaO6AJAbyrsNYNbGl_upscaled_video.mp4"
+  }
+}
+Other types
+#
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data
+
+10)fal-ai/amt-interpolation
+
+About
+Interpolate
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/amt-interpolation", {
+  input: {
+    video_url: "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/diffusers/animatediff-vid2vid-input-2.gif"
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/amt-interpolation", {
+  input: {
+    video_url: "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/diffusers/animatediff-vid2vid-input-2.gif"
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/amt-interpolation", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/amt-interpolation", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+video_url string
+URL of the video to be processed
+
+output_fps integer
+Output frames per second Default value: 24
+
+recursive_interpolation_passes integer
+Number of recursive interpolation passes Default value: 2
+
+
+{
+  "video_url": "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/diffusers/animatediff-vid2vid-input-2.gif",
+  "output_fps": 24,
+  "recursive_interpolation_passes": 2
+}
+Output
+#
+video File
+Generated video
+
+
+{
+  "video": {
+    "url": "",
+    "content_type": "image/png",
+    "file_name": "z9RV14K95DvU.png",
+    "file_size": 4404019
+  }
+}
+Other types
+#
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data
+
+Frame
+#
+url string
+URL of the frame
+

@@ -1,0 +1,2633 @@
+1)fal-ai/lyria2
+About
+Generate music using Google's Lyria 2 text-to-music model.
+
+For best results, prompts should be descriptive and clear. Include:
+
+Genre/Style: Specify the musical genre (e.g., "classical", "electronic", "rock", "jazz", "hip hop")
+Mood/Emotion: Describe the desired feeling or atmosphere (e.g., "happy", "melancholy", "energetic")
+Instrumentation: List the instruments you want to hear (e.g., "piano", "synthesizer", "acoustic guitar")
+Tempo/Rhythm: Indicate the speed and feel (e.g., "fast tempo", "slow ballad", "driving beat")
+Soundscapes/Effects: For non-musical audio, describe the environment or specific sound effects
+Arrangement/Structure: Briefly describe the progression or layering of sounds if important
+Production Quality: Terms like "high-quality production," "clean mix," or "vintage recording"
+The model supports:
+
+48kHz WAV audio output
+30 second duration
+Negative prompting to exclude unwanted elements
+Seed-based reproducibility
+Safety filters prevent generation of inappropriate content.
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/lyria2", {
+  input: {
+    prompt: "A lush, ambient soundscape featuring the serene sounds of a flowing river, complemented by the distant chirping of birds, and a gentle, melancholic piano melody that slowly unfolds."
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/lyria2", {
+  input: {
+    prompt: "A lush, ambient soundscape featuring the serene sounds of a flowing river, complemented by the distant chirping of birds, and a gentle, melancholic piano melody that slowly unfolds."
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/lyria2", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/lyria2", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+prompt string
+The text prompt describing the music you want to generate
+
+negative_prompt string
+A description of what to exclude from the generated audio Default value: "low quality"
+
+seed integer
+A seed for deterministic generation. If provided, the model will attempt to produce the same audio given the same prompt and other parameters.
+
+
+{
+  "prompt": "A lush, ambient soundscape featuring the serene sounds of a flowing river, complemented by the distant chirping of birds, and a gentle, melancholic piano melody that slowly unfolds.",
+  "negative_prompt": "vocals, slow tempo"
+}
+Output
+#
+audio File
+The generated music
+
+
+{
+  "audio": {
+    "url": "https://v3.fal.media/files/koala/9V6ADhxcZrZr2FcaiNA7H_output.wav"
+  }
+}
+Other types
+#
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data
+
+2)fal-ai/ace-step
+
+About
+Generate audio from text using the ACE-Step model.
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/ace-step", {
+  input: {
+    tags: "lofi, hiphop, drum and bass, trap, chill"
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/ace-step", {
+  input: {
+    tags: "lofi, hiphop, drum and bass, trap, chill"
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/ace-step", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/ace-step", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+tags string
+Comma-separated list of genre tags to control the style of the generated audio.
+
+lyrics string
+Lyrics to be sung in the audio. If not provided or if [inst] or [instrumental] is the content of this field, no lyrics will be sung. Use control structures like [verse], [chorus] and [bridge] to control the structure of the song. Default value: ""
+
+duration float
+The duration of the generated audio in seconds. Default value: 60
+
+number_of_steps integer
+Number of steps to generate the audio. Default value: 27
+
+seed integer
+Random seed for reproducibility. If not provided, a random seed will be used.
+
+scheduler SchedulerEnum
+Scheduler to use for the generation process. Default value: "euler"
+
+Possible enum values: euler, heun
+
+guidance_type GuidanceTypeEnum
+Type of CFG to use for the generation process. Default value: "apg"
+
+Possible enum values: cfg, apg, cfg_star
+
+granularity_scale integer
+Granularity scale for the generation process. Higher values can reduce artifacts. Default value: 10
+
+guidance_interval float
+Guidance interval for the generation. 0.5 means only apply guidance in the middle steps (0.25 * infer_steps to 0.75 * infer_steps) Default value: 0.5
+
+guidance_interval_decay float
+Guidance interval decay for the generation. Guidance scale will decay from guidance_scale to min_guidance_scale in the interval. 0.0 means no decay.
+
+guidance_scale float
+Guidance scale for the generation. Default value: 15
+
+minimum_guidance_scale float
+Minimum guidance scale for the generation after the decay. Default value: 3
+
+tag_guidance_scale float
+Tag guidance scale for the generation. Default value: 5
+
+lyric_guidance_scale float
+Lyric guidance scale for the generation. Default value: 1.5
+
+
+{
+  "tags": "lofi, hiphop, drum and bass, trap, chill",
+  "duration": 60,
+  "number_of_steps": 27,
+  "scheduler": "euler",
+  "guidance_type": "apg",
+  "granularity_scale": 10,
+  "guidance_interval": 0.5,
+  "guidance_interval_decay": 0,
+  "guidance_scale": 15,
+  "minimum_guidance_scale": 3,
+  "tag_guidance_scale": 5,
+  "lyric_guidance_scale": 1.5
+}
+Output
+#
+audio File
+The generated audio file.
+
+seed integer
+The random seed used for the generation process.
+
+tags string
+The genre tags used in the generation process.
+
+lyrics string
+The lyrics used in the generation process.
+
+
+{
+  "audio": {
+    "url": "https://storage.googleapis.com/falserverless/example_outputs/ace-step-text-to-audio.wav"
+  },
+  "seed": 42,
+  "tags": "lofi, hiphop, drum and bass, trap, chill",
+  "lyrics": "[inst]"
+}
+Other types
+#
+ACEStepAudioInpaintResponse
+#
+audio File
+The generated audio file.
+
+seed integer
+The random seed used for the generation process.
+
+tags string
+The genre tags used in the generation process.
+
+lyrics string
+The lyrics used in the generation process.
+
+ACEStepAudioInpaintRequest
+#
+audio_url string
+URL of the audio file to be inpainted.
+
+start_time_relative_to StartTimeRelativeToEnum
+Whether the start time is relative to the start or end of the audio. Default value: "start"
+
+Possible enum values: start, end
+
+start_time float
+start time in seconds for the inpainting process.
+
+end_time_relative_to EndTimeRelativeToEnum
+Whether the end time is relative to the start or end of the audio. Default value: "start"
+
+Possible enum values: start, end
+
+end_time float
+end time in seconds for the inpainting process. Default value: 30
+
+tags string
+Comma-separated list of genre tags to control the style of the generated audio.
+
+lyrics string
+Lyrics to be sung in the audio. If not provided or if [inst] or [instrumental] is the content of this field, no lyrics will be sung. Use control structures like [verse], [chorus] and [bridge] to control the structure of the song. Default value: ""
+
+variance float
+Variance for the inpainting process. Higher values can lead to more diverse results. Default value: 0.5
+
+number_of_steps integer
+Number of steps to generate the audio. Default value: 27
+
+seed integer
+Random seed for reproducibility. If not provided, a random seed will be used.
+
+scheduler SchedulerEnum
+Scheduler to use for the generation process. Default value: "euler"
+
+Possible enum values: euler, heun
+
+guidance_type GuidanceTypeEnum
+Type of CFG to use for the generation process. Default value: "apg"
+
+Possible enum values: cfg, apg, cfg_star
+
+granularity_scale integer
+Granularity scale for the generation process. Higher values can reduce artifacts. Default value: 10
+
+guidance_interval float
+Guidance interval for the generation. 0.5 means only apply guidance in the middle steps (0.25 * infer_steps to 0.75 * infer_steps) Default value: 0.5
+
+guidance_interval_decay float
+Guidance interval decay for the generation. Guidance scale will decay from guidance_scale to min_guidance_scale in the interval. 0.0 means no decay.
+
+guidance_scale float
+Guidance scale for the generation. Default value: 15
+
+minimum_guidance_scale float
+Minimum guidance scale for the generation after the decay. Default value: 3
+
+tag_guidance_scale float
+Tag guidance scale for the generation. Default value: 5
+
+lyric_guidance_scale float
+Lyric guidance scale for the generation. Default value: 1.5
+
+ACEStepAudioToAudioResponse
+#
+audio File
+The generated audio file.
+
+seed integer
+The random seed used for the generation process.
+
+tags string
+The genre tags used in the generation process.
+
+lyrics string
+The lyrics used in the generation process.
+
+ACEStepAudioToAudioRequest
+#
+audio_url string
+URL of the audio file to be outpainted.
+
+edit_mode EditModeEnum
+Whether to edit the lyrics only or remix the audio. Default value: "remix"
+
+Possible enum values: lyrics, remix
+
+original_tags string
+Original tags of the audio file.
+
+original_lyrics string
+Original lyrics of the audio file. Default value: ""
+
+tags string
+Comma-separated list of genre tags to control the style of the generated audio.
+
+lyrics string
+Lyrics to be sung in the audio. If not provided or if [inst] or [instrumental] is the content of this field, no lyrics will be sung. Use control structures like [verse], [chorus] and [bridge] to control the structure of the song. Default value: ""
+
+number_of_steps integer
+Number of steps to generate the audio. Default value: 27
+
+seed integer
+Random seed for reproducibility. If not provided, a random seed will be used.
+
+scheduler SchedulerEnum
+Scheduler to use for the generation process. Default value: "euler"
+
+Possible enum values: euler, heun
+
+guidance_type GuidanceTypeEnum
+Type of CFG to use for the generation process. Default value: "apg"
+
+Possible enum values: cfg, apg, cfg_star
+
+granularity_scale integer
+Granularity scale for the generation process. Higher values can reduce artifacts. Default value: 10
+
+guidance_interval float
+Guidance interval for the generation. 0.5 means only apply guidance in the middle steps (0.25 * infer_steps to 0.75 * infer_steps) Default value: 0.5
+
+guidance_interval_decay float
+Guidance interval decay for the generation. Guidance scale will decay from guidance_scale to min_guidance_scale in the interval. 0.0 means no decay.
+
+guidance_scale float
+Guidance scale for the generation. Default value: 15
+
+minimum_guidance_scale float
+Minimum guidance scale for the generation after the decay. Default value: 3
+
+tag_guidance_scale float
+Tag guidance scale for the generation. Default value: 5
+
+lyric_guidance_scale float
+Lyric guidance scale for the generation. Default value: 1.5
+
+original_seed integer
+Original seed of the audio file.
+
+ACEStepAudioOutpaintRequest
+#
+audio_url string
+URL of the audio file to be outpainted.
+
+extend_before_duration float
+Duration in seconds to extend the audio from the start.
+
+extend_after_duration float
+Duration in seconds to extend the audio from the end. Default value: 30
+
+tags string
+Comma-separated list of genre tags to control the style of the generated audio.
+
+lyrics string
+Lyrics to be sung in the audio. If not provided or if [inst] or [instrumental] is the content of this field, no lyrics will be sung. Use control structures like [verse], [chorus] and [bridge] to control the structure of the song. Default value: ""
+
+number_of_steps integer
+Number of steps to generate the audio. Default value: 27
+
+seed integer
+Random seed for reproducibility. If not provided, a random seed will be used.
+
+scheduler SchedulerEnum
+Scheduler to use for the generation process. Default value: "euler"
+
+Possible enum values: euler, heun
+
+guidance_type GuidanceTypeEnum
+Type of CFG to use for the generation process. Default value: "apg"
+
+Possible enum values: cfg, apg, cfg_star
+
+granularity_scale integer
+Granularity scale for the generation process. Higher values can reduce artifacts. Default value: 10
+
+guidance_interval float
+Guidance interval for the generation. 0.5 means only apply guidance in the middle steps (0.25 * infer_steps to 0.75 * infer_steps) Default value: 0.5
+
+guidance_interval_decay float
+Guidance interval decay for the generation. Guidance scale will decay from guidance_scale to min_guidance_scale in the interval. 0.0 means no decay.
+
+guidance_scale float
+Guidance scale for the generation. Default value: 15
+
+minimum_guidance_scale float
+Minimum guidance scale for the generation after the decay. Default value: 3
+
+tag_guidance_scale float
+Tag guidance scale for the generation. Default value: 5
+
+lyric_guidance_scale float
+Lyric guidance scale for the generation. Default value: 1.5
+
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data
+
+ACEStepPromptToAudioRequest
+#
+prompt string
+Prompt to control the style of the generated audio. This will be used to generate tags and lyrics.
+
+instrumental boolean
+Whether to generate an instrumental version of the audio.
+
+duration float
+The duration of the generated audio in seconds. Default value: 60
+
+number_of_steps integer
+Number of steps to generate the audio. Default value: 27
+
+seed integer
+Random seed for reproducibility. If not provided, a random seed will be used.
+
+scheduler SchedulerEnum
+Scheduler to use for the generation process. Default value: "euler"
+
+Possible enum values: euler, heun
+
+guidance_type GuidanceTypeEnum
+Type of CFG to use for the generation process. Default value: "apg"
+
+Possible enum values: cfg, apg, cfg_star
+
+granularity_scale integer
+Granularity scale for the generation process. Higher values can reduce artifacts. Default value: 10
+
+guidance_interval float
+Guidance interval for the generation. 0.5 means only apply guidance in the middle steps (0.25 * infer_steps to 0.75 * infer_steps) Default value: 0.5
+
+guidance_interval_decay float
+Guidance interval decay for the generation. Guidance scale will decay from guidance_scale to min_guidance_scale in the interval. 0.0 means no decay.
+
+guidance_scale float
+Guidance scale for the generation. Default value: 15
+
+minimum_guidance_scale float
+Minimum guidance scale for the generation after the decay. Default value: 3
+
+tag_guidance_scale float
+Tag guidance scale for the generation. Default value: 5
+
+lyric_guidance_scale float
+Lyric guidance scale for the generation. Default value: 1.5
+
+
+3)cassetteai/music-generator
+
+About
+Receives JSON payload, runs generation, returns a JSON with a signed URL to the WAV file.
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("CassetteAI/music-generator", {
+  input: {
+    prompt: "Smooth chill hip-hop beat with mellow piano melodies, deep bass, and soft drums, perfect for a night drive. Key: D Minor, Tempo: 90 BPM.",
+    duration: 50
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("CassetteAI/music-generator", {
+  input: {
+    prompt: "Smooth chill hip-hop beat with mellow piano melodies, deep bass, and soft drums, perfect for a night drive. Key: D Minor, Tempo: 90 BPM.",
+    duration: 50
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("CassetteAI/music-generator", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("CassetteAI/music-generator", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+prompt string
+The prompt to generate music from.
+
+duration integer
+The duration of the generated music in seconds.
+
+
+{
+  "prompt": "Smooth chill hip-hop beat with mellow piano melodies, deep bass, and soft drums, perfect for a night drive. Key: D Minor, Tempo: 90 BPM.",
+  "duration": 50
+}
+Output
+#
+audio_file File
+The generated music
+
+
+{
+  "audio_file": {
+    "url": "https://v3.fal.media/files/panda/T-GP6cbpo1lgL8ll4oKGj_generated.wav"
+  }
+}
+Other types
+#
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+model 4 - fal-ai/ace-step/prompt-to-audio
+
+About
+Generate audio from a prompt using the ACE-Step model.
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/ace-step/prompt-to-audio", {
+  input: {
+    prompt: "A lofi hiphop song with a chill vibe about a sunny day on the boardwalk."
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/ace-step/prompt-to-audio", {
+  input: {
+    prompt: "A lofi hiphop song with a chill vibe about a sunny day on the boardwalk."
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/ace-step/prompt-to-audio", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/ace-step/prompt-to-audio", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+prompt string
+Prompt to control the style of the generated audio. This will be used to generate tags and lyrics.
+
+instrumental boolean
+Whether to generate an instrumental version of the audio.
+
+duration float
+The duration of the generated audio in seconds. Default value: 60
+
+number_of_steps integer
+Number of steps to generate the audio. Default value: 27
+
+seed integer
+Random seed for reproducibility. If not provided, a random seed will be used.
+
+scheduler SchedulerEnum
+Scheduler to use for the generation process. Default value: "euler"
+
+Possible enum values: euler, heun
+
+guidance_type GuidanceTypeEnum
+Type of CFG to use for the generation process. Default value: "apg"
+
+Possible enum values: cfg, apg, cfg_star
+
+granularity_scale integer
+Granularity scale for the generation process. Higher values can reduce artifacts. Default value: 10
+
+guidance_interval float
+Guidance interval for the generation. 0.5 means only apply guidance in the middle steps (0.25 * infer_steps to 0.75 * infer_steps) Default value: 0.5
+
+guidance_interval_decay float
+Guidance interval decay for the generation. Guidance scale will decay from guidance_scale to min_guidance_scale in the interval. 0.0 means no decay.
+
+guidance_scale float
+Guidance scale for the generation. Default value: 15
+
+minimum_guidance_scale float
+Minimum guidance scale for the generation after the decay. Default value: 3
+
+tag_guidance_scale float
+Tag guidance scale for the generation. Default value: 5
+
+lyric_guidance_scale float
+Lyric guidance scale for the generation. Default value: 1.5
+
+
+{
+  "prompt": "A lofi hiphop song with a chill vibe about a sunny day on the boardwalk.",
+  "instrumental": false,
+  "duration": 60,
+  "number_of_steps": 27,
+  "scheduler": "euler",
+  "guidance_type": "apg",
+  "granularity_scale": 10,
+  "guidance_interval": 0.5,
+  "guidance_interval_decay": 0,
+  "guidance_scale": 15,
+  "minimum_guidance_scale": 3,
+  "tag_guidance_scale": 5,
+  "lyric_guidance_scale": 1.5
+}
+Output
+#
+audio File
+The generated audio file.
+
+seed integer
+The random seed used for the generation process.
+
+tags string
+The genre tags used in the generation process.
+
+lyrics string
+The lyrics used in the generation process.
+
+
+{
+  "audio": {
+    "url": "https://storage.googleapis.com/falserverless/example_outputs/ace-step-text-to-audio.wav"
+  },
+  "seed": 42,
+  "tags": "lofi, hiphop, drum and bass, trap, chill",
+  "lyrics": "[inst]"
+}
+Other types
+#
+ACEStepAudioInpaintResponse
+#
+audio File
+The generated audio file.
+
+seed integer
+The random seed used for the generation process.
+
+tags string
+The genre tags used in the generation process.
+
+lyrics string
+The lyrics used in the generation process.
+
+ACEStepAudioInpaintRequest
+#
+audio_url string
+URL of the audio file to be inpainted.
+
+start_time_relative_to StartTimeRelativeToEnum
+Whether the start time is relative to the start or end of the audio. Default value: "start"
+
+Possible enum values: start, end
+
+start_time float
+start time in seconds for the inpainting process.
+
+end_time_relative_to EndTimeRelativeToEnum
+Whether the end time is relative to the start or end of the audio. Default value: "start"
+
+Possible enum values: start, end
+
+end_time float
+end time in seconds for the inpainting process. Default value: 30
+
+tags string
+Comma-separated list of genre tags to control the style of the generated audio.
+
+lyrics string
+Lyrics to be sung in the audio. If not provided or if [inst] or [instrumental] is the content of this field, no lyrics will be sung. Use control structures like [verse], [chorus] and [bridge] to control the structure of the song. Default value: ""
+
+variance float
+Variance for the inpainting process. Higher values can lead to more diverse results. Default value: 0.5
+
+number_of_steps integer
+Number of steps to generate the audio. Default value: 27
+
+seed integer
+Random seed for reproducibility. If not provided, a random seed will be used.
+
+scheduler SchedulerEnum
+Scheduler to use for the generation process. Default value: "euler"
+
+Possible enum values: euler, heun
+
+guidance_type GuidanceTypeEnum
+Type of CFG to use for the generation process. Default value: "apg"
+
+Possible enum values: cfg, apg, cfg_star
+
+granularity_scale integer
+Granularity scale for the generation process. Higher values can reduce artifacts. Default value: 10
+
+guidance_interval float
+Guidance interval for the generation. 0.5 means only apply guidance in the middle steps (0.25 * infer_steps to 0.75 * infer_steps) Default value: 0.5
+
+guidance_interval_decay float
+Guidance interval decay for the generation. Guidance scale will decay from guidance_scale to min_guidance_scale in the interval. 0.0 means no decay.
+
+guidance_scale float
+Guidance scale for the generation. Default value: 15
+
+minimum_guidance_scale float
+Minimum guidance scale for the generation after the decay. Default value: 3
+
+tag_guidance_scale float
+Tag guidance scale for the generation. Default value: 5
+
+lyric_guidance_scale float
+Lyric guidance scale for the generation. Default value: 1.5
+
+ACEStepAudioToAudioResponse
+#
+audio File
+The generated audio file.
+
+seed integer
+The random seed used for the generation process.
+
+tags string
+The genre tags used in the generation process.
+
+lyrics string
+The lyrics used in the generation process.
+
+ACEStepTextToAudioRequest
+#
+tags string
+Comma-separated list of genre tags to control the style of the generated audio.
+
+lyrics string
+Lyrics to be sung in the audio. If not provided or if [inst] or [instrumental] is the content of this field, no lyrics will be sung. Use control structures like [verse], [chorus] and [bridge] to control the structure of the song. Default value: ""
+
+duration float
+The duration of the generated audio in seconds. Default value: 60
+
+number_of_steps integer
+Number of steps to generate the audio. Default value: 27
+
+seed integer
+Random seed for reproducibility. If not provided, a random seed will be used.
+
+scheduler SchedulerEnum
+Scheduler to use for the generation process. Default value: "euler"
+
+Possible enum values: euler, heun
+
+guidance_type GuidanceTypeEnum
+Type of CFG to use for the generation process. Default value: "apg"
+
+Possible enum values: cfg, apg, cfg_star
+
+granularity_scale integer
+Granularity scale for the generation process. Higher values can reduce artifacts. Default value: 10
+
+guidance_interval float
+Guidance interval for the generation. 0.5 means only apply guidance in the middle steps (0.25 * infer_steps to 0.75 * infer_steps) Default value: 0.5
+
+guidance_interval_decay float
+Guidance interval decay for the generation. Guidance scale will decay from guidance_scale to min_guidance_scale in the interval. 0.0 means no decay.
+
+guidance_scale float
+Guidance scale for the generation. Default value: 15
+
+minimum_guidance_scale float
+Minimum guidance scale for the generation after the decay. Default value: 3
+
+tag_guidance_scale float
+Tag guidance scale for the generation. Default value: 5
+
+lyric_guidance_scale float
+Lyric guidance scale for the generation. Default value: 1.5
+
+ACEStepAudioToAudioRequest
+#
+audio_url string
+URL of the audio file to be outpainted.
+
+edit_mode EditModeEnum
+Whether to edit the lyrics only or remix the audio. Default value: "remix"
+
+Possible enum values: lyrics, remix
+
+original_tags string
+Original tags of the audio file.
+
+original_lyrics string
+Original lyrics of the audio file. Default value: ""
+
+tags string
+Comma-separated list of genre tags to control the style of the generated audio.
+
+lyrics string
+Lyrics to be sung in the audio. If not provided or if [inst] or [instrumental] is the content of this field, no lyrics will be sung. Use control structures like [verse], [chorus] and [bridge] to control the structure of the song. Default value: ""
+
+number_of_steps integer
+Number of steps to generate the audio. Default value: 27
+
+seed integer
+Random seed for reproducibility. If not provided, a random seed will be used.
+
+scheduler SchedulerEnum
+Scheduler to use for the generation process. Default value: "euler"
+
+Possible enum values: euler, heun
+
+guidance_type GuidanceTypeEnum
+Type of CFG to use for the generation process. Default value: "apg"
+
+Possible enum values: cfg, apg, cfg_star
+
+granularity_scale integer
+Granularity scale for the generation process. Higher values can reduce artifacts. Default value: 10
+
+guidance_interval float
+Guidance interval for the generation. 0.5 means only apply guidance in the middle steps (0.25 * infer_steps to 0.75 * infer_steps) Default value: 0.5
+
+guidance_interval_decay float
+Guidance interval decay for the generation. Guidance scale will decay from guidance_scale to min_guidance_scale in the interval. 0.0 means no decay.
+
+guidance_scale float
+Guidance scale for the generation. Default value: 15
+
+minimum_guidance_scale float
+Minimum guidance scale for the generation after the decay. Default value: 3
+
+tag_guidance_scale float
+Tag guidance scale for the generation. Default value: 5
+
+lyric_guidance_scale float
+Lyric guidance scale for the generation. Default value: 1.5
+
+original_seed integer
+Original seed of the audio file.
+
+ACEStepAudioOutpaintRequest
+#
+audio_url string
+URL of the audio file to be outpainted.
+
+extend_before_duration float
+Duration in seconds to extend the audio from the start.
+
+extend_after_duration float
+Duration in seconds to extend the audio from the end. Default value: 30
+
+tags string
+Comma-separated list of genre tags to control the style of the generated audio.
+
+lyrics string
+Lyrics to be sung in the audio. If not provided or if [inst] or [instrumental] is the content of this field, no lyrics will be sung. Use control structures like [verse], [chorus] and [bridge] to control the structure of the song. Default value: ""
+
+number_of_steps integer
+Number of steps to generate the audio. Default value: 27
+
+seed integer
+Random seed for reproducibility. If not provided, a random seed will be used.
+
+scheduler SchedulerEnum
+Scheduler to use for the generation process. Default value: "euler"
+
+Possible enum values: euler, heun
+
+guidance_type GuidanceTypeEnum
+Type of CFG to use for the generation process. Default value: "apg"
+
+Possible enum values: cfg, apg, cfg_star
+
+granularity_scale integer
+Granularity scale for the generation process. Higher values can reduce artifacts. Default value: 10
+
+guidance_interval float
+Guidance interval for the generation. 0.5 means only apply guidance in the middle steps (0.25 * infer_steps to 0.75 * infer_steps) Default value: 0.5
+
+guidance_interval_decay float
+Guidance interval decay for the generation. Guidance scale will decay from guidance_scale to min_guidance_scale in the interval. 0.0 means no decay.
+
+guidance_scale float
+Guidance scale for the generation. Default value: 15
+
+minimum_guidance_scale float
+Minimum guidance scale for the generation after the decay. Default value: 3
+
+tag_guidance_scale float
+Tag guidance scale for the generation. Default value: 5
+
+lyric_guidance_scale float
+Lyric guidance scale for the generation. Default value: 1.5
+
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data
+
+
+model 5 -- cassetteai/sound-effects-generator
+
+About
+Receives JSON payload, runs generation, returns a JSON with a signed URL to the WAV file.
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("cassetteai/sound-effects-generator", {
+  input: {
+    prompt: "dog barking in the rain",
+    duration: 30
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("cassetteai/sound-effects-generator", {
+  input: {
+    prompt: "dog barking in the rain",
+    duration: 30
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("cassetteai/sound-effects-generator", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("cassetteai/sound-effects-generator", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+prompt string
+The prompt to generate SFX.
+
+duration integer
+The duration of the generated SFX in seconds.
+
+
+{
+  "prompt": "dog barking in the rain",
+  "duration": 30
+}
+Output
+#
+audio_file File
+The generated SFX
+
+
+{
+  "audio_file": {
+    "url": "https://v3.fal.media/files/panda/FJ56Mbpj1F_MQVuO0UJ9k_generated.wav"
+  }
+}
+Other types
+#
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+model 6 -- fal-ai/diffrhythm
+
+About
+Generate
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/diffrhythm", {
+  input: {
+    lyrics: "[00:10.00]Moonlight spills through broken blinds
+  [00:13.20]Your shadow dances on the dashboard shrine
+  [00:16.85]Neon ghosts in gasoline rain
+  [00:20.40]I hear your laughter down the midnight train
+  [00:24.15]Static whispers through frayed wires
+  [00:27.65]Guitar strings hum our cathedral choirs
+  [00:31.30]Flicker screens show reruns of June
+  [00:34.90]I'm drowning in this mercury lagoon
+  [00:38.55]Electric veins pulse through concrete skies
+  [00:42.10]Your name echoes in the hollow where my heartbeat lies
+  [00:45.75]We're satellites trapped in parallel light
+  [00:49.25]Burning through the atmosphere of endless night
+  [01:00.00]Dusty vinyl spins reverse
+  [01:03.45]Our polaroid timeline bleeds through the verse
+  [01:07.10]Telescope aimed at dead stars
+  [01:10.65]Still tracing constellations through prison bars
+  [01:14.30]Electric veins pulse through concrete skies
+  [01:17.85]Your name echoes in the hollow where my heartbeat lies
+  [01:21.50]We're satellites trapped in parallel light
+  [01:25.05]Burning through the atmosphere of endless night
+  [02:10.00]Clockwork gears grind moonbeams to rust
+  [02:13.50]Our fingerprint smudged by interstellar dust
+  [02:17.15]Velvet thunder rolls through my veins
+  [02:20.70]Chasing phantom trains through solar plane
+  [02:24.35]Electric veins pulse through concrete skies
+  [02:27.90]Your name echoes in the hollow where my heartbeat lies
+  "
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/diffrhythm", {
+  input: {
+    lyrics: "[00:10.00]Moonlight spills through broken blinds
+  [00:13.20]Your shadow dances on the dashboard shrine
+  [00:16.85]Neon ghosts in gasoline rain
+  [00:20.40]I hear your laughter down the midnight train
+  [00:24.15]Static whispers through frayed wires
+  [00:27.65]Guitar strings hum our cathedral choirs
+  [00:31.30]Flicker screens show reruns of June
+  [00:34.90]I'm drowning in this mercury lagoon
+  [00:38.55]Electric veins pulse through concrete skies
+  [00:42.10]Your name echoes in the hollow where my heartbeat lies
+  [00:45.75]We're satellites trapped in parallel light
+  [00:49.25]Burning through the atmosphere of endless night
+  [01:00.00]Dusty vinyl spins reverse
+  [01:03.45]Our polaroid timeline bleeds through the verse
+  [01:07.10]Telescope aimed at dead stars
+  [01:10.65]Still tracing constellations through prison bars
+  [01:14.30]Electric veins pulse through concrete skies
+  [01:17.85]Your name echoes in the hollow where my heartbeat lies
+  [01:21.50]We're satellites trapped in parallel light
+  [01:25.05]Burning through the atmosphere of endless night
+  [02:10.00]Clockwork gears grind moonbeams to rust
+  [02:13.50]Our fingerprint smudged by interstellar dust
+  [02:17.15]Velvet thunder rolls through my veins
+  [02:20.70]Chasing phantom trains through solar plane
+  [02:24.35]Electric veins pulse through concrete skies
+  [02:27.90]Your name echoes in the hollow where my heartbeat lies
+  "
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/diffrhythm", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/diffrhythm", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+lyrics string
+The prompt to generate the song from. Must have two sections. Sections start with either [chorus] or a [verse].
+
+reference_audio_url string
+The URL of the reference audio to use for the music generation.
+
+style_prompt string
+The style prompt to use for the music generation.
+
+music_duration MusicDurationEnum
+The duration of the music to generate. Default value: "95s"
+
+Possible enum values: 95s, 285s
+
+cfg_strength float
+The CFG strength to use for the music generation. Default value: 4
+
+scheduler SchedulerEnum
+The scheduler to use for the music generation. Default value: "euler"
+
+Possible enum values: euler, midpoint, rk4, implicit_adams
+
+num_inference_steps integer
+The number of inference steps to use for the music generation. Default value: 32
+
+
+{
+  "lyrics": "[00:10.00]Moonlight spills through broken blinds\n[00:13.20]Your shadow dances on the dashboard shrine\n[00:16.85]Neon ghosts in gasoline rain\n[00:20.40]I hear your laughter down the midnight train\n[00:24.15]Static whispers through frayed wires\n[00:27.65]Guitar strings hum our cathedral choirs\n[00:31.30]Flicker screens show reruns of June\n[00:34.90]I'm drowning in this mercury lagoon\n[00:38.55]Electric veins pulse through concrete skies\n[00:42.10]Your name echoes in the hollow where my heartbeat lies\n[00:45.75]We're satellites trapped in parallel light\n[00:49.25]Burning through the atmosphere of endless night\n[01:00.00]Dusty vinyl spins reverse\n[01:03.45]Our polaroid timeline bleeds through the verse\n[01:07.10]Telescope aimed at dead stars\n[01:10.65]Still tracing constellations through prison bars\n[01:14.30]Electric veins pulse through concrete skies\n[01:17.85]Your name echoes in the hollow where my heartbeat lies\n[01:21.50]We're satellites trapped in parallel light\n[01:25.05]Burning through the atmosphere of endless night\n[02:10.00]Clockwork gears grind moonbeams to rust\n[02:13.50]Our fingerprint smudged by interstellar dust\n[02:17.15]Velvet thunder rolls through my veins\n[02:20.70]Chasing phantom trains through solar plane\n[02:24.35]Electric veins pulse through concrete skies\n[02:27.90]Your name echoes in the hollow where my heartbeat lies\n",
+  "reference_audio_url": "https://storage.googleapis.com/falserverless/model_tests/diffrythm/rock_en.wav",
+  "style_prompt": "pop",
+  "music_duration": "95s",
+  "cfg_strength": 4,
+  "scheduler": "euler",
+  "num_inference_steps": 32
+}
+Output
+#
+audio File
+Generated music file.
+
+
+{
+  "audio": {
+    "file_size": 33554520,
+    "file_name": "output.wav",
+    "content_type": "application/octet-stream",
+    "url": "https://v3.fal.media/files/elephant/VV4wtKXBpZL1bNv6en36t_output.wav"
+  }
+}
+Other types
+#
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data
+
+model 7 -- fal-ai/elevenlabs/sound-effects
+
+About
+ElevenLabs Sound Effects Generation.
+
+Turn text into sound effects for videos, voice-overs or video games using state-of-the-art sound generation technology.
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/elevenlabs/sound-effects", {
+  input: {
+    text: "Spacious braam suitable for high-impact movie trailer moments"
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+Streaming
+#
+This model supports streaming requests. You can stream data directly to the model and get the result in real-time.
+
+
+import { fal } from "@fal-ai/client";
+
+const stream = await fal.stream("fal-ai/elevenlabs/sound-effects", {
+  input: {
+    text: "Spacious braam suitable for high-impact movie trailer moments"
+  }
+});
+
+for await (const event of stream) {
+  console.log(event);
+}
+
+const result = await stream.done();
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/elevenlabs/sound-effects", {
+  input: {
+    text: "Spacious braam suitable for high-impact movie trailer moments"
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/elevenlabs/sound-effects", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/elevenlabs/sound-effects", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+text string
+The text describing the sound effect to generate
+
+duration_seconds float
+Duration in seconds (0.5-22). If None, optimal duration will be determined from prompt.
+
+prompt_influence float
+How closely to follow the prompt (0-1). Higher values mean less variation. Default value: 0.3
+
+
+{
+  "text": "Spacious braam suitable for high-impact movie trailer moments",
+  "prompt_influence": 0.3
+}
+Output
+#
+audio File
+The generated sound effect audio file in MP3 format
+
+
+{
+  "audio": {
+    "url": "https://v3.fal.media/files/lion/WgnO-jy6WduosuG_Ibobx_sound_effect.mp3"
+  }
+}
+Other types
+#
+SpeechToTextRequest
+#
+audio_url string
+URL of the audio file to transcribe
+
+language_code string
+Language code of the audio
+
+tag_audio_events boolean
+Tag audio events like laughter, applause, etc. Default value: true
+
+diarize boolean
+Whether to annotate who is speaking Default value: true
+
+VoiceCloningRequest
+#
+audio_urls list<AudioInput>
+List of audio files to use for voice cloning
+
+remove_background_noise boolean
+Whether to remove background noise from the audio files Default value: true
+
+TextToSpeechStreamRequest
+#
+text string
+The text to convert to speech
+
+voice string
+The voice to use for speech generation Default value: "Rachel"
+
+stability float
+Voice stability (0-1) Default value: 0.5
+
+similarity_boost float
+Similarity boost (0-1) Default value: 0.75
+
+style float
+Style exaggeration (0-1)
+
+speed float
+Speech speed (0.7-1.2). Values below 1.0 slow down the speech, above 1.0 speed it up. Extreme values may affect quality. Default value: 1
+
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+TextToSpeechRequest
+#
+text string
+The text to convert to speech
+
+voice string
+The voice to use for speech generation Default value: "Rachel"
+
+stability float
+Voice stability (0-1) Default value: 0.5
+
+similarity_boost float
+Similarity boost (0-1) Default value: 0.75
+
+style float
+Style exaggeration (0-1)
+
+speed float
+Speech speed (0.7-1.2). Values below 1.0 slow down the speech, above 1.0 speed it up. Extreme values may affect quality. Default value: 1
+
+timestamps boolean
+Whether to return timestamps for each word in the generated speech
+
+previous_text string
+The text that came before the text of the current request. Can be used to improve the speech's continuity when concatenating together multiple generations or to influence the speech's continuity in the current generation.
+
+next_text string
+The text that comes after the text of the current request. Can be used to improve the speech's continuity when concatenating together multiple generations or to influence the speech's continuity in the current generation.
+
+language_code string
+Language code (ISO 639-1) used to enforce a language for the model. Currently only Turbo v2.5 and Flash v2.5 support language enforcement. For other models, an error will be returned if language code is provided.
+
+AudioIsolationRequest
+#
+audio_url string
+URL of the audio file to isolate voice from
+
+TranscriptionWord
+#
+text string
+The transcribed word or audio event
+
+start float
+Start time in seconds
+
+end float
+End time in seconds
+
+type string
+Type of element (word, spacing, or audio_event)
+
+speaker_id string
+Speaker identifier if diarization was enabled
+
+model 8 -- fal-ai/yue
+
+About
+Generate
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/yue", {
+  input: {
+    lyrics: "[verse]
+  Staring at the sunset, colors paint the sky
+  Thoughts of you keep swirling, can't deny
+  I know I let you down, I made mistakes
+  But I'm here to mend the heart I didn't break
+
+  [chorus]
+  Every road you take, I'll be one step behind
+  Every dream you chase, I'm reaching for the light
+  You can't fight this feeling now
+  I won't back down
+  You know you can't deny it now
+  I won't back down
+  ",
+    genres: "inspiring female uplifting pop airy vocal electronic bright vocal vocal"
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/yue", {
+  input: {
+    lyrics: "[verse]
+  Staring at the sunset, colors paint the sky
+  Thoughts of you keep swirling, can't deny
+  I know I let you down, I made mistakes
+  But I'm here to mend the heart I didn't break
+
+  [chorus]
+  Every road you take, I'll be one step behind
+  Every dream you chase, I'm reaching for the light
+  You can't fight this feeling now
+  I won't back down
+  You know you can't deny it now
+  I won't back down
+  ",
+    genres: "inspiring female uplifting pop airy vocal electronic bright vocal vocal"
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/yue", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/yue", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+lyrics string
+The prompt to generate an image from. Must have two sections. Sections start with either [chorus] or a [verse].
+
+genres string
+The genres (separated by a space ' ') to guide the music generation.
+
+
+{
+  "lyrics": "[verse]\nStaring at the sunset, colors paint the sky\nThoughts of you keep swirling, can't deny\nI know I let you down, I made mistakes\nBut I'm here to mend the heart I didn't break\n\n[chorus]\nEvery road you take, I'll be one step behind\nEvery dream you chase, I'm reaching for the light\nYou can't fight this feeling now\nI won't back down\nYou know you can't deny it now\nI won't back down\n",
+  "genres": "inspiring female uplifting pop airy vocal electronic bright vocal vocal"
+}
+Output
+#
+audio File
+Generated music file.
+
+
+{
+  "audio": {
+    "file_size": 480462,
+    "file_name": "cot_inspiring-female-uplifting-pop-airy-vocal-electronic-bright-vocal-vocal_tp0@93_T1@0_rp1@2_maxtk3000_mixed_8179e8da-5452-4cf6-9d6b-f69280feb7e8.mp3",
+    "content_type": "application/octet-stream",
+    "url": "https://v3.fal.media/files/tiger/iAXHU3LtbJGeqPYWKkYMr_cot_inspiring-female-uplifting-pop-airy-vocal-electronic-bright-vocal-vocal_tp0%4093_T1%400_rp1%402_maxtk3000_mixed_74bcf408-eb99-4b88-b7bf-7d7212200cf1.mp3"
+  }
+}
+Other types
+#
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data
+
+model 9 -- fal-ai/mmaudio-v2/text-to-audio
+
+About
+Text To Audio
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/mmaudio-v2/text-to-audio", {
+  input: {
+    prompt: "Indian holy music"
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/mmaudio-v2/text-to-audio", {
+  input: {
+    prompt: "Indian holy music"
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/mmaudio-v2/text-to-audio", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/mmaudio-v2/text-to-audio", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+prompt string
+The prompt to generate the audio for.
+
+negative_prompt string
+The negative prompt to generate the audio for. Default value: ""
+
+seed integer
+The seed for the random number generator
+
+num_steps integer
+The number of steps to generate the audio for. Default value: 25
+
+duration float
+The duration of the audio to generate. Default value: 8
+
+cfg_strength float
+The strength of Classifier Free Guidance. Default value: 4.5
+
+mask_away_clip boolean
+Whether to mask away the clip.
+
+
+{
+  "prompt": "Indian holy music",
+  "num_steps": 25,
+  "duration": 8,
+  "cfg_strength": 4.5
+}
+Output
+#
+audio File
+The generated audio.
+
+
+{
+  "audio": {
+    "file_size": 1001342,
+    "file_name": "mmaudio_input.flac",
+    "content_type": "application/octet-stream",
+    "url": "https://storage.googleapis.com/falserverless/model_tests/video_models/mmaudio_output.flac"
+  }
+}
+Other types
+#
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data
+
+model 10 -- fal-ai/minimax-music
+
+About
+Text To Music
+
+1. Calling the API
+#
+Install the client
+#
+The client provides a convenient way to interact with the model API.
+
+npmyarnpnpmbun
+
+npm install --save @fal-ai/client
+Migrate to @fal-ai/client
+The @fal-ai/serverless-client package has been deprecated in favor of @fal-ai/client. Please check the migration guide for more information.
+
+Setup your API Key
+#
+Set FAL_KEY as an environment variable in your runtime.
+
+
+export FAL_KEY="YOUR_API_KEY"
+Submit a request
+#
+The client API handles the API submit protocol. It will handle the request status updates and return the result when the request is completed.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/minimax-music", {
+  input: {
+    prompt: "## Fast and Limitless
+   In the heart of the code, where dreams collide,
+
+  FAL's the name, taking tech for a ride.
+  Generative media, blazing the trail,
+
+  Fast inference power, we'll never fail.
+  ##",
+    reference_audio_url: "https://fal.media/files/lion/OOTBTSlxKMH_E8H6hoSlb.mpga"
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+2. Authentication
+#
+The API uses an API Key for authentication. It is recommended you set the FAL_KEY environment variable in your runtime when possible.
+
+API Key
+#
+In case your app is running in an environment where you cannot set environment variables, you can set the API Key manually as a client configuration.
+
+import { fal } from "@fal-ai/client";
+
+fal.config({
+  credentials: "YOUR_FAL_KEY"
+});
+Protect your API Key
+When running code on the client-side (e.g. in a browser, mobile app or GUI applications), make sure to not expose your FAL_KEY. Instead, use a server-side proxy to make requests to the API. For more information, check out our server-side integration guide.
+
+3. Queue
+#
+Long-running requests
+For long-running requests, such as training jobs or models with slower inference times, it is recommended to check the Queue status and rely on Webhooks instead of blocking while waiting for the result.
+
+Submit a request
+#
+The client API provides a convenient way to submit requests to the model.
+
+
+import { fal } from "@fal-ai/client";
+
+const { request_id } = await fal.queue.submit("fal-ai/minimax-music", {
+  input: {
+    prompt: "## Fast and Limitless
+   In the heart of the code, where dreams collide,
+
+  FAL's the name, taking tech for a ride.
+  Generative media, blazing the trail,
+
+  Fast inference power, we'll never fail.
+  ##",
+    reference_audio_url: "https://fal.media/files/lion/OOTBTSlxKMH_E8H6hoSlb.mpga"
+  },
+  webhookUrl: "https://optional.webhook.url/for/results",
+});
+Fetch request status
+#
+You can fetch the status of a request to check if it is completed or still in progress.
+
+
+import { fal } from "@fal-ai/client";
+
+const status = await fal.queue.status("fal-ai/minimax-music", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b",
+  logs: true,
+});
+Get the result
+#
+Once the request is completed, you can fetch the result. See the Output Schema for the expected result format.
+
+
+import { fal } from "@fal-ai/client";
+
+const result = await fal.queue.result("fal-ai/minimax-music", {
+  requestId: "764cabcf-b745-4b3e-ae38-1200304cf45b"
+});
+console.log(result.data);
+console.log(result.requestId);
+4. Files
+#
+Some attributes in the API accept file URLs as input. Whenever that's the case you can pass your own URL or a Base64 data URI.
+
+Data URI (base64)
+#
+You can pass a Base64 data URI as a file input. The API will handle the file decoding for you. Keep in mind that for large files, this alternative although convenient can impact the request performance.
+
+Hosted files (URL)
+#
+You can also pass your own URLs as long as they are publicly accessible. Be aware that some hosts might block cross-site requests, rate-limit, or consider the request as a bot.
+
+Uploading files
+#
+We provide a convenient file storage that allows you to upload files and use them in your requests. You can upload files using the client API and use the returned URL in your requests.
+
+
+import { fal } from "@fal-ai/client";
+
+const file = new File(["Hello, World!"], "hello.txt", { type: "text/plain" });
+const url = await fal.storage.upload(file);
+Auto uploads
+The client will auto-upload the file for you if you pass a binary object (e.g. File, Data).
+
+Read more about file handling in our file upload guide.
+
+5. Schema
+#
+Input
+#
+prompt string
+Lyrics with optional formatting. You can use a newline to separate each line of lyrics. You can use two newlines to add a pause between lines. You can use double hash marks (##) at the beginning and end of the lyrics to add accompaniment. Maximum 600 characters.
+
+reference_audio_url string
+Reference song, should contain music and vocals. Must be a .wav or .mp3 file longer than 15 seconds.
+
+
+{
+  "prompt": "## Fast and Limitless   \n In the heart of the code, where dreams collide,   \n\nFAL's the name, taking tech for a ride.    \nGenerative media, blazing the trail,   \n\nFast inference power, we'll never fail.\n##",
+  "reference_audio_url": "https://fal.media/files/lion/OOTBTSlxKMH_E8H6hoSlb.mpga"
+}
+Output
+#
+audio File
+The generated music
+
+
+{
+  "audio": {
+    "url": "https://fal.media/files/elephant/N5UNLCwkC2y8v7a3LQLFE_output.mp3"
+  }
+}
+Other types
+#
+File
+#
+url string
+The URL where the file can be downloaded from.
+
+content_type string
+The mime type of the file.
+
+file_name string
+The name of the file. It will be auto-generated if not provided.
+
+file_size integer
+The size of the file in bytes.
+
+file_data string
+File data
