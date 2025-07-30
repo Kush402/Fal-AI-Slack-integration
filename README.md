@@ -189,10 +189,14 @@ BACKEND: GET /api/mcp/operations
 ```
 
 **Available Operations:**
-- 🖼️ **Text to Image** - Generate images from text
+- ��️ **Text to Image** - Generate images from text
 - 🎬 **Text to Video** - Create videos from descriptions
-- 🎥 **Image to Video** - Animate static images
+- �� **Image to Video** - Animate static images
 - 🧊 **Image to 3D** - Convert images to 3D models
+- 🎵 **Text to Audio** - Generate music/audio from text
+- 🗣️ **Text to Speech** - Convert text to speech
+- 🖼️ **Image to Image** - Transform and edit existing images
+- �� **Video to Video** - Modify or restyle existing videos
 
 ### Step 3: Model Selection & Asset Generation
 ```
