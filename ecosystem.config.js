@@ -54,9 +54,10 @@ module.exports = {
       },
       env_production: {
         NODE_ENV: 'production',
-        PORT: 3000,
+        PORT: process.env.PORT || 3000,
         SERVICE_NAME: 'dashboard-backend',
-        MOCK_DRIVE_UPLOADS: 'false',
+        MOCK_DRIVE_UPLOADS: process.env.MOCK_DRIVE_UPLOADS || 'false',
+        
         // Google Drive configuration
         GOOGLE_SHARED_DRIVE_ID: process.env.GOOGLE_SHARED_DRIVE_ID,
         GOOGLE_PROJECT_ID: process.env.GOOGLE_PROJECT_ID,
@@ -66,7 +67,35 @@ module.exports = {
         GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
         GOOGLE_CLIENT_X509_CERT_URL: process.env.GOOGLE_CLIENT_X509_CERT_URL,
         GOOGLE_DRIVE_PARENT_FOLDER_ID: process.env.GOOGLE_DRIVE_PARENT_FOLDER_ID,
-        GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL: process.env.GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL
+        GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL: process.env.GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL,
+        
+        // Fal.ai Configuration
+        FAL_KEY: process.env.FAL_KEY,
+        FAL_AI_TIMEOUT: process.env.FAL_AI_TIMEOUT || '30000',
+        FAL_AI_MAX_RETRIES: process.env.FAL_AI_MAX_RETRIES || '3',
+        FAL_AI_RETRY_DELAY: process.env.FAL_AI_RETRY_DELAY || '1000',
+        
+        // Security Configuration
+        JWT_SECRET: process.env.JWT_SECRET,
+        ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
+        
+        // Redis Configuration (if using)
+        REDIS_HOST: process.env.REDIS_HOST,
+        REDIS_PORT: process.env.REDIS_PORT,
+        REDIS_PASSWORD: process.env.REDIS_PASSWORD,
+        REDIS_DB: process.env.REDIS_DB,
+        
+        // Rate Limiting
+        RATE_LIMIT_WINDOW: process.env.RATE_LIMIT_WINDOW || '900000',
+        RATE_LIMIT_MAX_REQUESTS: process.env.RATE_LIMIT_MAX_REQUESTS || '100',
+        
+        // API Configuration
+        API_REQUEST_TIMEOUT: process.env.API_REQUEST_TIMEOUT || '30000',
+        API_MAX_RETRIES: process.env.API_MAX_RETRIES || '3',
+        
+        // Logging
+        LOG_LEVEL: process.env.LOG_LEVEL || 'info'
+        
         // All other env vars will be loaded from .env file
       },
       log_file: './logs/dashboard-backend-combined.log',
@@ -102,9 +131,15 @@ module.exports = {
       max_memory_restart: '500M',
       env: {
         NODE_ENV: 'development',
-        SLACK_PORT: 3001,
-        BACKEND_API_URL: 'http://localhost:3000',
+        SLACK_PORT: process.env.SLACK_PORT || 3001,
+        BACKEND_API_URL: process.env.BACKEND_API_URL || 'http://localhost:3000',
         SERVICE_NAME: 'dashboard-slack',
+        
+        // Slack Configuration
+        SLACK_BOT_TOKEN: process.env.SLACK_BOT_TOKEN,
+        SLACK_SIGNING_SECRET: process.env.SLACK_SIGNING_SECRET,
+        SLACK_APP_TOKEN: process.env.SLACK_APP_TOKEN,
+        
         // Google Drive configuration
         GOOGLE_SHARED_DRIVE_ID: process.env.GOOGLE_SHARED_DRIVE_ID,
         GOOGLE_PROJECT_ID: process.env.GOOGLE_PROJECT_ID,
@@ -114,14 +149,48 @@ module.exports = {
         GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
         GOOGLE_CLIENT_X509_CERT_URL: process.env.GOOGLE_CLIENT_X509_CERT_URL,
         GOOGLE_DRIVE_PARENT_FOLDER_ID: process.env.GOOGLE_DRIVE_PARENT_FOLDER_ID,
-        GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL: process.env.GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL
+        GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL: process.env.GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL,
+        
+        // Fal.ai Configuration
+        FAL_KEY: process.env.FAL_KEY,
+        FAL_AI_TIMEOUT: process.env.FAL_AI_TIMEOUT || '30000',
+        FAL_AI_MAX_RETRIES: process.env.FAL_AI_MAX_RETRIES || '3',
+        FAL_AI_RETRY_DELAY: process.env.FAL_AI_RETRY_DELAY || '1000',
+        
+        // Security Configuration
+        JWT_SECRET: process.env.JWT_SECRET,
+        ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
+        
+        // Redis Configuration (if using)
+        REDIS_HOST: process.env.REDIS_HOST,
+        REDIS_PORT: process.env.REDIS_PORT,
+        REDIS_PASSWORD: process.env.REDIS_PASSWORD,
+        REDIS_DB: process.env.REDIS_DB,
+        
+        // Rate Limiting
+        RATE_LIMIT_WINDOW: process.env.RATE_LIMIT_WINDOW || '900000',
+        RATE_LIMIT_MAX_REQUESTS: process.env.RATE_LIMIT_MAX_REQUESTS || '100',
+        
+        // API Configuration
+        API_REQUEST_TIMEOUT: process.env.API_REQUEST_TIMEOUT || '30000',
+        API_MAX_RETRIES: process.env.API_MAX_RETRIES || '3',
+        
+        // Logging
+        LOG_LEVEL: process.env.LOG_LEVEL || 'info'
+        
         // All other env vars will be loaded from .env file
       },
       env_production: {
         NODE_ENV: 'production',
-        SLACK_PORT: 3001,
-        BACKEND_API_URL: 'http://localhost:3000',
+        SLACK_PORT: process.env.SLACK_PORT || 3001,
+        BACKEND_API_URL: process.env.BACKEND_API_URL || 'http://localhost:3000',
         SERVICE_NAME: 'dashboard-slack',
+        
+        // Slack Configuration
+        SLACK_BOT_TOKEN: process.env.SLACK_BOT_TOKEN,
+        SLACK_SIGNING_SECRET: process.env.SLACK_SIGNING_SECRET,
+        SLACK_APP_TOKEN: process.env.SLACK_APP_TOKEN,
+        
         // Google Drive configuration
         GOOGLE_SHARED_DRIVE_ID: process.env.GOOGLE_SHARED_DRIVE_ID,
         GOOGLE_PROJECT_ID: process.env.GOOGLE_PROJECT_ID,
@@ -131,7 +200,35 @@ module.exports = {
         GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
         GOOGLE_CLIENT_X509_CERT_URL: process.env.GOOGLE_CLIENT_X509_CERT_URL,
         GOOGLE_DRIVE_PARENT_FOLDER_ID: process.env.GOOGLE_DRIVE_PARENT_FOLDER_ID,
-        GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL: process.env.GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL
+        GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL: process.env.GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL,
+        
+        // Fal.ai Configuration
+        FAL_KEY: process.env.FAL_KEY,
+        FAL_AI_TIMEOUT: process.env.FAL_AI_TIMEOUT || '30000',
+        FAL_AI_MAX_RETRIES: process.env.FAL_AI_MAX_RETRIES || '3',
+        FAL_AI_RETRY_DELAY: process.env.FAL_AI_RETRY_DELAY || '1000',
+        
+        // Security Configuration
+        JWT_SECRET: process.env.JWT_SECRET,
+        ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
+        
+        // Redis Configuration (if using)
+        REDIS_HOST: process.env.REDIS_HOST,
+        REDIS_PORT: process.env.REDIS_PORT,
+        REDIS_PASSWORD: process.env.REDIS_PASSWORD,
+        REDIS_DB: process.env.REDIS_DB,
+        
+        // Rate Limiting
+        RATE_LIMIT_WINDOW: process.env.RATE_LIMIT_WINDOW || '900000',
+        RATE_LIMIT_MAX_REQUESTS: process.env.RATE_LIMIT_MAX_REQUESTS || '100',
+        
+        // API Configuration
+        API_REQUEST_TIMEOUT: process.env.API_REQUEST_TIMEOUT || '30000',
+        API_MAX_RETRIES: process.env.API_MAX_RETRIES || '3',
+        
+        // Logging
+        LOG_LEVEL: process.env.LOG_LEVEL || 'info'
+        
         // All other env vars will be loaded from .env file
       },
       log_file: './logs/dashboard-slack-combined.log',
@@ -178,7 +275,7 @@ module.exports = {
       user: 'deploy',
       host: ['your-staging-server.com'],
       ref: 'origin/develop',
-      repo: 'git@github.com:your-username/fal.ai_dashboard.git',
+      repo: 'git@github.com/your-username/fal.ai_dashboard.git',
       path: '/var/www/fal.ai_dashboard-staging',
       'post-deploy': 'npm install && pm2 reload ecosystem.config.js --env staging'
     }

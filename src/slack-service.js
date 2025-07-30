@@ -2167,6 +2167,23 @@ class SlackBotService {
             // Initialize log management
             await logManager.initialize();
             
+            // Try to discover backend URL if not already set
+            if (!this.backendUrl || this.backendUrl === 'http://localhost:3000') {
+                try {
+                    this.backendUrl = await this.discoverBackendUrl();
+                    // Update the API client base URL
+                    this.apiClient.defaults.baseURL = this.backendUrl;
+                    logger.info('Backend URL discovered and updated', {
+                        discoveredUrl: this.backendUrl
+                    });
+                } catch (discoveryError) {
+                    logger.warn('Failed to discover backend URL, using configured URL', {
+                        configuredUrl: this.backendUrl,
+                        discoveryError: discoveryError.message
+                    });
+                }
+            }
+            
             // Check backend API connectivity
             await this.checkBackendConnectivity();
             
@@ -2188,6 +2205,41 @@ class SlackBotService {
             
             throw error;
         }
+    }
+
+    /**
+     * Dynamically discover backend API URL
+     */
+    async discoverBackendUrl() {
+        const commonPorts = [3000, 30001, 3001, 3002, 3003];
+        const baseUrl = 'http://localhost';
+        
+        for (const port of commonPorts) {
+            try {
+                const testUrl = `${baseUrl}:${port}`;
+                logger.info(`Trying to discover backend at ${testUrl}`);
+                
+                const response = await this.apiClient.get('/health', {
+                    baseURL: testUrl,
+                    timeout: 5000
+                });
+                
+                if (response.status === 200) {
+                    logger.info(`Backend discovered at ${testUrl}`, {
+                        discoveredUrl: testUrl,
+                        status: response.status
+                    });
+                    return testUrl;
+                }
+            } catch (error) {
+                logger.debug(`Backend not found at port ${port}`, {
+                    port,
+                    error: error.message
+                });
+            }
+        }
+        
+        throw new Error('Backend API not found on any common ports');
     }
 
     /**
