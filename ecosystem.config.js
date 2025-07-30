@@ -37,7 +37,7 @@ module.exports = {
       max_memory_restart: '1G',
       env: {
         NODE_ENV: 'development',
-        PORT: 3000,
+        PORT: process.env.PORT || 3000,
         SERVICE_NAME: 'dashboard-backend',
         MOCK_DRIVE_UPLOADS: 'false',
         // Google Drive configuration
@@ -132,7 +132,7 @@ module.exports = {
       env: {
         NODE_ENV: 'development',
         SLACK_PORT: process.env.SLACK_PORT || 3001,
-        BACKEND_API_URL: process.env.BACKEND_API_URL || 'http://localhost:3000',
+        BACKEND_API_URL: process.env.BACKEND_API_URL || `http://localhost:${process.env.PORT || 3000}`,
         SERVICE_NAME: 'dashboard-slack',
         
         // Slack Configuration
@@ -183,7 +183,7 @@ module.exports = {
       env_production: {
         NODE_ENV: 'production',
         SLACK_PORT: process.env.SLACK_PORT || 3001,
-        BACKEND_API_URL: process.env.BACKEND_API_URL || 'http://localhost:3000',
+        BACKEND_API_URL: process.env.BACKEND_API_URL || `http://localhost:${process.env.PORT || 3000}`,
         SERVICE_NAME: 'dashboard-slack',
         
         // Slack Configuration
