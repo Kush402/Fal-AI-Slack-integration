@@ -18,7 +18,7 @@ if [ ! -f .env ]; then
 GOOGLE_CLOUD_PROJECT_ID=your-project-id-here
 
 # Google Cloud API Key (Vertex AI restricted)
-GOOGLE_CLOUD_API_KEY=AIzaSyCtQzqKS5mz5CvKx4Xvi8fCyz1-ocC15cw
+GOOGLE_CLOUD_API_KEY=
 
 # Google Cloud Region for Vertex AI
 GOOGLE_CLOUD_REGION=us-central1
@@ -82,7 +82,7 @@ echo "4. Update FAL_KEY in .env file"
 echo "5. Run: npm run start:backend"
 echo ""
 echo "📋 Your Google Cloud API Key is already configured:"
-echo "   AIzaSyCtQzqKS5mz5CvKx4Xvi8fCyz1-ocC15cw"
+echo "    "
 echo ""
 echo "🎉 Setup complete! Your backend will use real Gemini 2.5 for brand research."
 
